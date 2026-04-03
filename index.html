@@ -576,6 +576,9 @@
       <button class="manage-tags-btn" id="bulk-add-btn">+ Bulk Add</button>
       <button class="manage-tags-btn" id="clear-pins-btn">📌 Clear Pins</button>
       <button class="manage-tags-btn" id="manage-tags-btn">🏷️ Tags</button>
+      <button class="manage-tags-btn" id="export-btn">📤 Export</button>
+      <button class="manage-tags-btn" id="import-btn">📥 Import</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" />
     </div>
 
     <div class="tag-filter-bar" id="tag-filter-bar"></div>
@@ -884,7 +887,7 @@
           ? "Edit Player"
           : "Add Player";
         document.getElementById("username-input").value = username;
-        document.getElementById("username-input").disabled = isEdit;
+        document.getElementById("username-input").disabled = false;
         document.getElementById("notes-input").value = notes;
         document.getElementById("username-error").style.display = "none";
         document.getElementById("modal-notice").style.display = showNotice
@@ -1067,8 +1070,19 @@
             return;
           }
 
+          if (modalIsEdit && username.toLowerCase() !== modalOriginalUsername.toLowerCase() && findPlayer(players, username)) {
+            errorEl.textContent = "A player with that username already exists.";
+            errorEl.style.display = "block";
+            return;
+          }
+
+          if (modalIsEdit && username.toLowerCase() !== modalOriginalUsername.toLowerCase()) {
+            const idx = players.findIndex(p => p.username.toLowerCase() === modalOriginalUsername.toLowerCase());
+            if (idx !== -1) players[idx].username = username;
+          }
+
           players = upsertPlayer(players, {
-            username: modalIsEdit ? modalOriginalUsername : username,
+            username: username,
             notes,
             tags: modalSelectedTags,
             ...(modalIsEdit ? {} : { pinned: true }),
@@ -1270,6 +1284,82 @@
       document.getElementById("bulk-pin-close").addEventListener("click", closeBulkPinModal);
       document.getElementById("bulk-pin-overlay").addEventListener("click", function(e) {
         if (e.target === this) closeBulkPinModal();
+      });
+
+      // --- Export / Import ---
+      document.getElementById("export-btn").addEventListener("click", function () {
+        const data = { players: loadPlayers(), tags: loadTags() };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "fish-profiles-" + new Date().toISOString().slice(0, 10) + ".json";
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      document.getElementById("import-btn").addEventListener("click", function () {
+        document.getElementById("import-file").click();
+      });
+
+      document.getElementById("import-file").addEventListener("change", function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (ev) {
+          try {
+            const data = JSON.parse(ev.target.result);
+            if (!data.players || !Array.isArray(data.players)) {
+              alert("Invalid file: missing players array.");
+              return;
+            }
+            // Merge tags
+            if (Array.isArray(data.tags)) {
+              let existingTags = loadTags();
+              const existingIds = new Set(existingTags.map(t => t.id));
+              data.tags.forEach(t => {
+                if (!existingIds.has(t.id)) existingTags.push(t);
+              });
+              saveTags(existingTags);
+            }
+            // Merge players — concat notes with newline
+            let players = loadPlayers();
+            data.players.forEach(imported => {
+              const idx = players.findIndex(p => p.username.toLowerCase() === imported.username.toLowerCase());
+              if (idx !== -1) {
+                const oldNotes = players[idx].notes || "";
+                const newNotes = imported.notes || "";
+                if (newNotes && oldNotes) {
+                  players[idx].notes = oldNotes + "\n" + newNotes;
+                } else if (newNotes) {
+                  players[idx].notes = newNotes;
+                }
+                players[idx].updatedAt = new Date().toISOString();
+                if (imported.pinned) players[idx].pinned = true;
+                if (imported.tags) {
+                  const existing = new Set(players[idx].tags || []);
+                  imported.tags.forEach(t => existing.add(t));
+                  players[idx].tags = [...existing];
+                }
+              } else {
+                players.push({
+                  username: imported.username,
+                  notes: imported.notes || "",
+                  pinned: imported.pinned || false,
+                  tags: imported.tags || [],
+                  updatedAt: new Date().toISOString(),
+                });
+              }
+            });
+            savePlayers(players);
+            renderList();
+            alert("Imported " + data.players.length + " player(s).");
+          } catch (err) {
+            alert("Failed to import: " + err.message);
+          }
+        };
+        reader.readAsText(file);
+        this.value = "";
       });
 
       // --- Deep-Link Handler ---
