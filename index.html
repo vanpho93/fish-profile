@@ -1,0 +1,951 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Player Notes</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: #121212;
+        color: #eaeaea;
+        font-family: Inter, Arial, sans-serif;
+        padding: 16px;
+        min-height: 100vh;
+      }
+      h1 {
+        color: #7ee787;
+        font-size: 20px;
+        text-align: center;
+        margin-bottom: 16px;
+      }
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .search-wrap {
+        flex: 1;
+        position: relative;
+      }
+      .search-wrap input {
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        color: #eaeaea;
+        width: 100%;
+        padding: 8px 32px 8px 10px;
+        font-size: 14px;
+        outline: none;
+      }
+      .search-wrap input:focus {
+        border-color: #7ee787;
+      }
+      .search-wrap .clear {
+        position: absolute;
+        right: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #8b949e;
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+        display: none;
+      }
+      .search-wrap input:not(:placeholder-shown) ~ .clear {
+        display: block;
+      }
+      .add-btn {
+        background: #7ee787;
+        color: #0d1117;
+        font-weight: 700;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 14px;
+        cursor: pointer;
+        font-size: 14px;
+        white-space: nowrap;
+      }
+      .add-btn:hover {
+        opacity: 0.9;
+      }
+      .section-label {
+        font-size: 11px;
+        color: #8b949e;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin: 12px 0 6px;
+        padding-left: 2px;
+      }
+      .card {
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 8px;
+        padding: 12px;
+        display: flex;
+        gap: 10px;
+        margin-bottom: 8px;
+        align-items: flex-start;
+      }
+      .card.pinned {
+        border-color: #7ee787;
+      }
+      .card-body {
+        flex: 1;
+        min-width: 0;
+      }
+      .card-name {
+        font-weight: 700;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .pin-badge {
+        background: #7ee787;
+        color: #0d1117;
+        font-size: 11px;
+        border-radius: 4px;
+        padding: 1px 5px;
+        font-weight: 700;
+      }
+      .card-notes {
+        font-size: 13px;
+        color: #8b949e;
+        white-space: pre-wrap;
+        word-break: break-word;
+        margin-top: 4px;
+      }
+      .card-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 6px;
+      }
+      .tag-chip {
+        font-size: 11px;
+        border-radius: 10px;
+        padding: 2px 8px;
+        font-weight: 600;
+        color: #0d1117;
+        display: inline-block;
+      }
+      .modal-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+      }
+      .modal-tag-chip {
+        font-size: 12px;
+        border-radius: 10px;
+        padding: 3px 10px;
+        font-weight: 600;
+        color: #0d1117;
+        cursor: pointer;
+        opacity: 0.4;
+        border: 2px solid transparent;
+        transition: opacity 0.15s;
+      }
+      .modal-tag-chip.selected {
+        opacity: 1;
+        border-color: #7ee787;
+      }
+      .modal-tag-chip .remove-tag {
+        margin-left: 4px;
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .new-tag-form {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        margin-top: 8px;
+      }
+      .new-tag-form input[type="text"] {
+        width: 120px;
+        padding: 4px 8px;
+        font-size: 12px;
+      }
+      .new-tag-form input[type="color"] {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        border: 1px solid #30363d;
+        border-radius: 4px;
+        background: #161b22;
+        cursor: pointer;
+      }
+      .new-tag-form button {
+        font-size: 12px;
+        padding: 4px 10px;
+      }
+      .manage-tags-btn {
+        background: none;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        color: #8b949e;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+      .manage-tags-btn:hover {
+        color: #eaeaea;
+        border-color: #eaeaea;
+      }
+      .tag-manage-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+      .tag-manage-row input[type="color"] {
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        border: 1px solid #30363d;
+        border-radius: 4px;
+        background: #161b22;
+        cursor: pointer;
+      }
+      .tag-manage-row input[type="text"] {
+        flex: 1;
+        padding: 4px 8px;
+        font-size: 13px;
+      }
+      .tag-manage-row .icon-btn {
+        padding: 3px 6px;
+        font-size: 12px;
+      }
+      .card-actions {
+        display: flex;
+        gap: 6px;
+        flex-shrink: 0;
+        align-items: center;
+      }
+      .icon-btn {
+        background: none;
+        border: 1px solid #30363d;
+        border-radius: 5px;
+        color: #8b949e;
+        cursor: pointer;
+        padding: 4px 7px;
+        font-size: 14px;
+        line-height: 1;
+      }
+      .icon-btn:hover {
+        color: #eaeaea;
+        border-color: #eaeaea;
+      }
+      .icon-btn.active {
+        color: #7ee787;
+        border-color: #7ee787;
+      }
+      .icon-btn.danger {
+        color: #f85149;
+        border-color: #f85149;
+      }
+      .confirm-inline {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        font-size: 12px;
+        color: #f85149;
+      }
+      .confirm-inline button {
+        font-size: 12px;
+        padding: 2px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        border: 1px solid #30363d;
+      }
+      .confirm-inline .yes {
+        background: #f85149;
+        color: #fff;
+        border-color: #f85149;
+      }
+      .confirm-inline .no {
+        background: #21262d;
+        color: #eaeaea;
+        border-color: #30363d;
+      }
+      .empty-state {
+        color: #8b949e;
+        text-align: center;
+        padding: 40px 0;
+        font-size: 14px;
+      }
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+      }
+      .modal-overlay.show {
+        display: flex;
+      }
+      .modal-card {
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 10px;
+        padding: 20px;
+        width: min(480px, 95vw);
+        position: relative;
+      }
+      .modal-title {
+        color: #7ee787;
+        font-size: 17px;
+        font-weight: 700;
+        margin-bottom: 14px;
+      }
+      .modal-card label {
+        display: block;
+        font-size: 13px;
+        color: #8b949e;
+        margin-bottom: 4px;
+        margin-top: 12px;
+      }
+      .modal-card label:first-of-type {
+        margin-top: 0;
+      }
+      .modal-card input,
+      .modal-card textarea {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        color: #eaeaea;
+        width: 100%;
+        padding: 8px 10px;
+        font-size: 14px;
+        font-family: inherit;
+        outline: none;
+      }
+      .modal-card input:focus,
+      .modal-card textarea:focus {
+        border-color: #7ee787;
+      }
+      .modal-card textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+      .error {
+        color: #f85149;
+        font-size: 12px;
+        margin-top: 2px;
+        display: none;
+      }
+      .notice {
+        background: #1a2a1a;
+        border: 1px solid #7ee787;
+        color: #7ee787;
+        border-radius: 6px;
+        font-size: 13px;
+        padding: 8px 10px;
+        margin-bottom: 12px;
+        display: none;
+      }
+      .modal-buttons {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        margin-top: 16px;
+      }
+      .btn-primary {
+        background: #7ee787;
+        color: #0d1117;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .btn-primary:hover {
+        opacity: 0.9;
+      }
+      .btn-secondary {
+        background: #21262d;
+        color: #eaeaea;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        padding: 8px 16px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .btn-secondary:hover {
+        border-color: #eaeaea;
+      }
+      .modal-close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: none;
+        border: none;
+        color: #8b949e;
+        font-size: 20px;
+        cursor: pointer;
+        line-height: 1;
+      }
+      .modal-close:hover {
+        color: #eaeaea;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🃏 Player Notes</h1>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <input type="text" id="search-input" placeholder="Search players…" />
+        <button class="clear" id="search-clear">✕</button>
+      </div>
+      <button class="add-btn" id="add-btn">+ Add Player</button>
+      <button class="manage-tags-btn" id="manage-tags-btn">🏷️ Tags</button>
+    </div>
+
+    <div id="list-container"></div>
+
+    <div class="modal-overlay" id="modal-overlay">
+      <div class="modal-card">
+        <button class="modal-close" id="modal-close">✕</button>
+        <div class="modal-title" id="modal-title">Add Player</div>
+        <div class="notice" id="modal-notice">
+          Player not found — create them?
+        </div>
+        <label for="username-input">Username</label>
+        <input type="text" id="username-input" autocomplete="off" />
+        <div class="error" id="username-error">
+          Username is required and must be unique.
+        </div>
+        <label for="notes-input">Notes</label>
+        <textarea id="notes-input" rows="4"></textarea>
+        <label>Tags</label>
+        <div class="modal-tags" id="modal-tags"></div>
+        <div class="new-tag-form" id="new-tag-form">
+          <input
+            type="text"
+            id="new-tag-label"
+            placeholder="New tag…"
+            autocomplete="off"
+          />
+          <input type="color" id="new-tag-color" value="#7ee787" />
+          <button class="btn-secondary" id="new-tag-add" type="button">
+            +
+          </button>
+        </div>
+        <div class="modal-buttons">
+          <button class="btn-secondary" id="modal-cancel">Cancel</button>
+          <button class="btn-primary" id="modal-save">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="tags-modal-overlay">
+      <div class="modal-card">
+        <button class="modal-close" id="tags-modal-close">✕</button>
+        <div class="modal-title">Manage Tags</div>
+        <div id="tags-manage-list"></div>
+        <div class="new-tag-form" style="margin-top: 12px">
+          <input
+            type="text"
+            id="manage-new-tag-label"
+            placeholder="New tag…"
+            autocomplete="off"
+          />
+          <input type="color" id="manage-new-tag-color" value="#7ee787" />
+          <button class="btn-primary" id="manage-new-tag-add" type="button">
+            + Add
+          </button>
+        </div>
+        <div class="modal-buttons">
+          <button class="btn-secondary" id="tags-modal-done">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const STORAGE_KEY = "poker_player_notes";
+      const TAGS_KEY = "poker_player_notes_tags";
+
+      // --- Data Layer ---
+      function loadPlayers() {
+        try {
+          return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        } catch {
+          return [];
+        }
+      }
+
+      function savePlayers(players) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(players));
+      }
+
+      function findPlayer(players, username) {
+        const lower = username.toLowerCase();
+        return players.find((p) => p.username.toLowerCase() === lower);
+      }
+
+      function upsertPlayer(players, data) {
+        const idx = players.findIndex(
+          (p) => p.username.toLowerCase() === data.username.toLowerCase(),
+        );
+        const now = new Date().toISOString();
+        if (idx !== -1) {
+          players[idx].notes = data.notes;
+          players[idx].updatedAt = now;
+          if (data.pinned !== undefined) players[idx].pinned = data.pinned;
+          if (data.tags !== undefined) players[idx].tags = data.tags;
+        } else {
+          players.push({
+            username: data.username,
+            notes: data.notes || "",
+            pinned: data.pinned || false,
+            tags: data.tags || [],
+            updatedAt: now,
+          });
+        }
+        return players;
+      }
+
+      // --- Tag Data Layer ---
+      function loadTags() {
+        try {
+          return JSON.parse(localStorage.getItem(TAGS_KEY)) || [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveTags(tags) {
+        localStorage.setItem(TAGS_KEY, JSON.stringify(tags));
+      }
+
+      function addTag(tags, label, color) {
+        const id = Date.now().toString();
+        tags.push({ id, label, color });
+        return id;
+      }
+
+      function deleteTagGlobal(tagId) {
+        let tags = loadTags();
+        tags = tags.filter((t) => t.id !== tagId);
+        saveTags(tags);
+        let players = loadPlayers();
+        players.forEach((p) => {
+          if (p.tags) p.tags = p.tags.filter((id) => id !== tagId);
+        });
+        savePlayers(players);
+      }
+
+      function deletePlayer(players, username) {
+        const lower = username.toLowerCase();
+        return players.filter((p) => p.username.toLowerCase() !== lower);
+      }
+
+      function sortedPlayers(players, query) {
+        let filtered = players;
+        if (query) {
+          const q = query.toLowerCase();
+          filtered = players.filter((p) =>
+            p.username.toLowerCase().includes(q),
+          );
+        }
+        const pinned = filtered.filter((p) => p.pinned);
+        const unpinned = filtered
+          .filter((p) => !p.pinned)
+          .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+        return { pinned, unpinned };
+      }
+
+      // --- Render Layer ---
+      let currentQuery = "";
+
+      function escapeHTML(str) {
+        const d = document.createElement("div");
+        d.textContent = str;
+        return d.innerHTML;
+      }
+
+      function buildCard(player) {
+        const pinClass = player.pinned ? " pinned" : "";
+        const pinActiveClass = player.pinned ? " active" : "";
+        const allTags = loadTags();
+        const playerTagIds = player.tags || [];
+        const tagChips = playerTagIds
+          .map((id) => {
+            const t = allTags.find((tg) => tg.id === id);
+            return t
+              ? `<span class="tag-chip" style="background:${escapeHTML(t.color)}">${escapeHTML(t.label)}</span>`
+              : "";
+          })
+          .join("");
+        return `<div class="card${pinClass}" data-username="${escapeHTML(player.username)}">
+    <div class="card-body">
+      <div class="card-name">${escapeHTML(player.username)}${player.pinned ? ' <span class="pin-badge">LIVE</span>' : ""}</div>
+      ${player.notes ? `<div class="card-notes">${escapeHTML(player.notes)}</div>` : ""}
+      ${tagChips ? `<div class="card-tags">${tagChips}</div>` : ""}
+    </div>
+    <div class="card-actions">
+      <button class="icon-btn${pinActiveClass}" data-action="pin" data-username="${escapeHTML(player.username)}" title="Pin">📌</button>
+      <button class="icon-btn" data-action="edit" data-username="${escapeHTML(player.username)}" title="Edit">✏️</button>
+      <button class="icon-btn danger" data-action="delete" data-username="${escapeHTML(player.username)}" title="Delete">🗑️</button>
+    </div>
+  </div>`;
+      }
+
+      function renderList() {
+        const container = document.getElementById("list-container");
+        const players = loadPlayers();
+        const { pinned, unpinned } = sortedPlayers(players, currentQuery);
+        let html = "";
+
+        if (pinned.length === 0 && unpinned.length === 0) {
+          html = `<div class="empty-state">${currentQuery ? "No players match your search." : 'No players yet. Tap "+ Add Player" to get started.'}</div>`;
+          container.innerHTML = html;
+          return;
+        }
+
+        if (pinned.length) {
+          html += `<div class="section-label">📌 Pinned (${pinned.length})</div>`;
+          pinned.forEach((p) => {
+            html += buildCard(p);
+          });
+        }
+
+        html += `<div class="section-label">All Players (${unpinned.length})</div>`;
+        unpinned.forEach((p) => {
+          html += buildCard(p);
+        });
+
+        container.innerHTML = html;
+      }
+
+      // --- Modal Logic ---
+      let modalIsEdit = false;
+      let modalOriginalUsername = "";
+      let modalSelectedTags = [];
+
+      function renderModalTags() {
+        const allTags = loadTags();
+        const container = document.getElementById("modal-tags");
+        container.innerHTML = allTags
+          .map((t) => {
+            const sel = modalSelectedTags.includes(t.id) ? " selected" : "";
+            return `<span class="modal-tag-chip${sel}" data-tag-id="${escapeHTML(t.id)}" style="background:${escapeHTML(t.color)}">${escapeHTML(t.label)}</span>`;
+          })
+          .join("");
+      }
+
+      function openModal({
+        username = "",
+        notes = "",
+        isEdit = false,
+        showNotice = false,
+        tags = [],
+      } = {}) {
+        modalIsEdit = isEdit;
+        modalOriginalUsername = username;
+        modalSelectedTags = [...tags];
+        document.getElementById("modal-title").textContent = isEdit
+          ? "Edit Player"
+          : "Add Player";
+        document.getElementById("username-input").value = username;
+        document.getElementById("username-input").disabled = isEdit;
+        document.getElementById("notes-input").value = notes;
+        document.getElementById("username-error").style.display = "none";
+        document.getElementById("modal-notice").style.display = showNotice
+          ? "block"
+          : "none";
+        document.getElementById("new-tag-label").value = "";
+        renderModalTags();
+        document.getElementById("modal-overlay").classList.add("show");
+        const focus = isEdit ? "notes-input" : "username-input";
+        setTimeout(() => document.getElementById(focus).focus(), 50);
+      }
+
+      function closeModal() {
+        document.getElementById("modal-overlay").classList.remove("show");
+      }
+
+      // --- Event Layer ---
+      document
+        .getElementById("list-container")
+        .addEventListener("click", function (e) {
+          const btn = e.target.closest("[data-action]");
+          if (!btn) return;
+          const action = btn.getAttribute("data-action");
+          const username = btn.getAttribute("data-username");
+          let players = loadPlayers();
+
+          if (action === "pin") {
+            const p = findPlayer(players, username);
+            if (p) {
+              p.pinned = !p.pinned;
+              savePlayers(players);
+              renderList();
+            }
+          } else if (action === "edit") {
+            const p = findPlayer(players, username);
+            if (p)
+              openModal({
+                username: p.username,
+                notes: p.notes,
+                isEdit: true,
+                tags: p.tags || [],
+              });
+          } else if (action === "delete") {
+            const card = btn.closest(".card");
+            const actions = card.querySelector(".card-actions");
+            actions.innerHTML = `<div class="confirm-inline">Delete? <button class="yes" data-action="confirm-del" data-username="${escapeHTML(username)}">Yes</button> <button class="no" data-action="cancel-del">No</button></div>`;
+          } else if (action === "confirm-del") {
+            players = deletePlayer(players, username);
+            savePlayers(players);
+            renderList();
+          } else if (action === "cancel-del") {
+            renderList();
+          }
+        });
+
+      document
+        .getElementById("search-input")
+        .addEventListener("input", function () {
+          currentQuery = this.value;
+          renderList();
+        });
+
+      document
+        .getElementById("search-clear")
+        .addEventListener("click", function () {
+          document.getElementById("search-input").value = "";
+          currentQuery = "";
+          renderList();
+        });
+
+      document.getElementById("add-btn").addEventListener("click", function () {
+        openModal();
+      });
+
+      document
+        .getElementById("modal-close")
+        .addEventListener("click", closeModal);
+      document
+        .getElementById("modal-cancel")
+        .addEventListener("click", closeModal);
+
+      document
+        .getElementById("modal-overlay")
+        .addEventListener("click", function (e) {
+          if (e.target === this) closeModal();
+        });
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") closeModal();
+      });
+
+      document
+        .getElementById("modal-save")
+        .addEventListener("click", function () {
+          const usernameInput = document.getElementById("username-input");
+          const notesInput = document.getElementById("notes-input");
+          const username = usernameInput.value.trim();
+          const notes = notesInput.value.trim();
+          const errorEl = document.getElementById("username-error");
+
+          if (!username) {
+            errorEl.textContent = "Username is required.";
+            errorEl.style.display = "block";
+            return;
+          }
+
+          let players = loadPlayers();
+
+          if (!modalIsEdit && findPlayer(players, username)) {
+            errorEl.textContent = "A player with that username already exists.";
+            errorEl.style.display = "block";
+            return;
+          }
+
+          players = upsertPlayer(players, {
+            username: modalIsEdit ? modalOriginalUsername : username,
+            notes,
+            tags: modalSelectedTags,
+          });
+          savePlayers(players);
+          closeModal();
+          renderList();
+        });
+
+      // --- Modal Tag Events ---
+      document
+        .getElementById("modal-tags")
+        .addEventListener("click", function (e) {
+          const chip = e.target.closest(".modal-tag-chip");
+          if (!chip) return;
+          const id = chip.getAttribute("data-tag-id");
+          if (modalSelectedTags.includes(id)) {
+            modalSelectedTags = modalSelectedTags.filter((t) => t !== id);
+          } else {
+            modalSelectedTags.push(id);
+          }
+          renderModalTags();
+        });
+
+      document
+        .getElementById("new-tag-add")
+        .addEventListener("click", function () {
+          const label = document.getElementById("new-tag-label").value.trim();
+          const color = document.getElementById("new-tag-color").value;
+          if (!label) return;
+          const tags = loadTags();
+          const id = addTag(tags, label, color);
+          saveTags(tags);
+          modalSelectedTags.push(id);
+          document.getElementById("new-tag-label").value = "";
+          renderModalTags();
+        });
+
+      // --- Manage Tags Modal ---
+      function renderTagsManager() {
+        const tags = loadTags();
+        const container = document.getElementById("tags-manage-list");
+        if (!tags.length) {
+          container.innerHTML =
+            '<div style="color:#8b949e;font-size:13px;padding:8px 0">No tags defined yet.</div>';
+          return;
+        }
+        container.innerHTML = tags
+          .map(
+            (
+              t,
+            ) => `<div class="tag-manage-row" data-tag-id="${escapeHTML(t.id)}">
+    <input type="color" value="${escapeHTML(t.color)}" data-action="recolor">
+    <input type="text" value="${escapeHTML(t.label)}" data-action="rename">
+    <button class="icon-btn danger" data-action="delete-tag" title="Delete">🗑️</button>
+  </div>`,
+          )
+          .join("");
+      }
+
+      document
+        .getElementById("manage-tags-btn")
+        .addEventListener("click", function () {
+          renderTagsManager();
+          document.getElementById("tags-modal-overlay").classList.add("show");
+        });
+
+      document
+        .getElementById("tags-modal-close")
+        .addEventListener("click", function () {
+          document
+            .getElementById("tags-modal-overlay")
+            .classList.remove("show");
+          renderList();
+        });
+      document
+        .getElementById("tags-modal-done")
+        .addEventListener("click", function () {
+          document
+            .getElementById("tags-modal-overlay")
+            .classList.remove("show");
+          renderList();
+        });
+      document
+        .getElementById("tags-modal-overlay")
+        .addEventListener("click", function (e) {
+          if (e.target === this) {
+            this.classList.remove("show");
+            renderList();
+          }
+        });
+
+      document
+        .getElementById("tags-manage-list")
+        .addEventListener("click", function (e) {
+          const btn = e.target.closest('[data-action="delete-tag"]');
+          if (!btn) return;
+          const row = btn.closest(".tag-manage-row");
+          const id = row.getAttribute("data-tag-id");
+          deleteTagGlobal(id);
+          renderTagsManager();
+        });
+
+      document
+        .getElementById("tags-manage-list")
+        .addEventListener("change", function (e) {
+          const row = e.target.closest(".tag-manage-row");
+          if (!row) return;
+          const id = row.getAttribute("data-tag-id");
+          const tags = loadTags();
+          const tag = tags.find((t) => t.id === id);
+          if (!tag) return;
+          if (e.target.getAttribute("data-action") === "recolor")
+            tag.color = e.target.value;
+          if (e.target.getAttribute("data-action") === "rename")
+            tag.label = e.target.value.trim();
+          saveTags(tags);
+        });
+
+      document
+        .getElementById("manage-new-tag-add")
+        .addEventListener("click", function () {
+          const label = document
+            .getElementById("manage-new-tag-label")
+            .value.trim();
+          const color = document.getElementById("manage-new-tag-color").value;
+          if (!label) return;
+          const tags = loadTags();
+          addTag(tags, label, color);
+          saveTags(tags);
+          document.getElementById("manage-new-tag-label").value = "";
+          renderTagsManager();
+        });
+
+      // --- Deep-Link Handler ---
+      (function handleDeepLink() {
+        const params = new URLSearchParams(window.location.search);
+        const username = params.get("username");
+        if (!username) {
+          renderList();
+          return;
+        }
+
+        history.replaceState({}, "", window.location.pathname);
+        let players = loadPlayers();
+        const player = findPlayer(players, username);
+
+        if (player) {
+          player.pinned = true;
+          savePlayers(players);
+          renderList();
+          const card = document.querySelector(
+            `.card[data-username="${CSS.escape(player.username)}"]`,
+          );
+          if (card)
+            card.scrollIntoView({ behavior: "smooth", block: "center" });
+          openModal({
+            username: player.username,
+            notes: player.notes,
+            isEdit: true,
+            tags: player.tags || [],
+          });
+        } else {
+          openModal({ username, showNotice: true });
+          renderList();
+        }
+      })();
+    </script>
+  </body>
+</html>
