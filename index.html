@@ -423,6 +423,47 @@
       .modal-close:hover {
         color: #eaeaea;
       }
+      .bulk-pin-list {
+        list-style: none;
+        margin: 10px 0;
+        padding: 0;
+      }
+      .bulk-pin-list li {
+        padding: 6px 0;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .bulk-pin-list .badge-new {
+        background: #7ee787;
+        color: #0d1117;
+        font-size: 11px;
+        border-radius: 4px;
+        padding: 1px 6px;
+        font-weight: 700;
+      }
+      .bulk-pin-list .badge-existing {
+        background: #30363d;
+        color: #8b949e;
+        font-size: 11px;
+        border-radius: 4px;
+        padding: 1px 6px;
+        font-weight: 700;
+      }
+      .btn-danger {
+        background: #f85149;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 16px;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .btn-danger:hover {
+        opacity: 0.9;
+      }
     </style>
   </head>
   <body>
@@ -434,6 +475,7 @@
         <button class="clear" id="search-clear">✕</button>
       </div>
       <button class="add-btn" id="add-btn">+ Add Player</button>
+      <button class="manage-tags-btn" id="clear-pins-btn">📌 Clear Pins</button>
       <button class="manage-tags-btn" id="manage-tags-btn">🏷️ Tags</button>
     </div>
 
@@ -494,6 +536,19 @@
         </div>
         <div class="modal-buttons">
           <button class="btn-secondary" id="tags-modal-done">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="bulk-pin-overlay">
+      <div class="modal-card">
+        <button class="modal-close" id="bulk-pin-close">✕</button>
+        <div class="modal-title">Bulk Pin Players</div>
+        <ul class="bulk-pin-list" id="bulk-pin-list"></ul>
+        <div class="modal-buttons">
+          <button class="btn-secondary" id="bulk-pin-cancel">Cancel</button>
+          <button class="btn-danger" id="bulk-pin-clear-add">Clear Pins &amp; Add</button>
+          <button class="btn-primary" id="bulk-pin-add-all">Add All</button>
         </div>
       </div>
     </div>
@@ -790,6 +845,13 @@
         openModal();
       });
 
+      document.getElementById("clear-pins-btn").addEventListener("click", function () {
+        let players = loadPlayers();
+        players.forEach(p => p.pinned = false);
+        savePlayers(players);
+        renderList();
+      });
+
       document
         .getElementById("modal-close")
         .addEventListener("click", closeModal);
@@ -834,6 +896,7 @@
             username: modalIsEdit ? modalOriginalUsername : username,
             notes,
             tags: modalSelectedTags,
+            ...(modalIsEdit ? {} : { pinned: true }),
           });
           savePlayers(players);
           closeModal();
@@ -965,9 +1028,68 @@
           renderTagsManager();
         });
 
+      // --- Bulk Pin Modal ---
+      let bulkPinUsernames = [];
+
+      function openBulkPinModal(usernames) {
+        bulkPinUsernames = usernames;
+        const players = loadPlayers();
+        const list = document.getElementById("bulk-pin-list");
+        list.innerHTML = usernames.map(u => {
+          const existing = findPlayer(players, u);
+          const badge = existing
+            ? '<span class="badge-existing">EXISTING</span>'
+            : '<span class="badge-new">NEW</span>';
+          return `<li>${escapeHTML(u)} ${badge}</li>`;
+        }).join("");
+        document.getElementById("bulk-pin-overlay").classList.add("show");
+      }
+
+      function closeBulkPinModal() {
+        document.getElementById("bulk-pin-overlay").classList.remove("show");
+      }
+
+      function executeBulkPin(clearExisting) {
+        let players = loadPlayers();
+        if (clearExisting) {
+          players.forEach(p => p.pinned = false);
+        }
+        bulkPinUsernames.forEach(u => {
+          const existing = findPlayer(players, u);
+          if (existing) {
+            existing.pinned = true;
+          } else {
+            players = upsertPlayer(players, { username: u, notes: "", pinned: true, tags: [] });
+          }
+        });
+        savePlayers(players);
+        closeBulkPinModal();
+        renderList();
+      }
+
+      document.getElementById("bulk-pin-add-all").addEventListener("click", () => executeBulkPin(false));
+      document.getElementById("bulk-pin-clear-add").addEventListener("click", () => executeBulkPin(true));
+      document.getElementById("bulk-pin-cancel").addEventListener("click", closeBulkPinModal);
+      document.getElementById("bulk-pin-close").addEventListener("click", closeBulkPinModal);
+      document.getElementById("bulk-pin-overlay").addEventListener("click", function(e) {
+        if (e.target === this) closeBulkPinModal();
+      });
+
       // --- Deep-Link Handler ---
       (function handleDeepLink() {
         const params = new URLSearchParams(window.location.search);
+
+        const pinUsernames = params.get("pin_usernames");
+        if (pinUsernames) {
+          history.replaceState({}, "", window.location.pathname);
+          const usernames = pinUsernames.split(",").map(u => u.trim()).filter(Boolean);
+          if (usernames.length) {
+            renderList();
+            openBulkPinModal(usernames);
+            return;
+          }
+        }
+
         const username = params.get("username");
         if (!username) {
           renderList();
