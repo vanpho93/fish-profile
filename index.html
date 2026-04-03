@@ -124,6 +124,38 @@
         white-space: pre-wrap;
         word-break: break-word;
         margin-top: 4px;
+        cursor: pointer;
+        padding: 2px 4px;
+        border-radius: 4px;
+      }
+      .card-notes:hover {
+        background: #161b22;
+      }
+      .card-notes-empty {
+        font-size: 13px;
+        color: #484f58;
+        font-style: italic;
+        margin-top: 4px;
+        cursor: pointer;
+        padding: 2px 4px;
+        border-radius: 4px;
+      }
+      .card-notes-empty:hover {
+        background: #161b22;
+      }
+      .card-notes-edit {
+        background: #161b22;
+        border: 1px solid #7ee787;
+        border-radius: 4px;
+        color: #eaeaea;
+        width: 100%;
+        padding: 4px 6px;
+        font-size: 13px;
+        font-family: inherit;
+        margin-top: 4px;
+        resize: vertical;
+        min-height: 40px;
+        outline: none;
       }
       .card-tags {
         display: flex;
@@ -137,7 +169,73 @@
         padding: 2px 8px;
         font-weight: 600;
         color: #0d1117;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+      }
+      .tag-chip .tag-remove {
+        cursor: pointer;
+        font-weight: 700;
+        font-size: 13px;
+        line-height: 1;
+        opacity: 0.6;
+      }
+      .tag-chip .tag-remove:hover {
+        opacity: 1;
+      }
+      .add-tag-wrap {
+        position: relative;
         display: inline-block;
+      }
+      .add-tag-btn {
+        font-size: 11px;
+        border-radius: 10px;
+        padding: 2px 8px;
+        font-weight: 600;
+        background: #21262d;
+        color: #8b949e;
+        border: 1px dashed #30363d;
+        cursor: pointer;
+      }
+      .add-tag-btn:hover {
+        color: #eaeaea;
+        border-color: #eaeaea;
+      }
+      .add-tag-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        margin-top: 4px;
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        padding: 4px;
+        z-index: 20;
+        min-width: 120px;
+        display: none;
+      }
+      .add-tag-dropdown.show {
+        display: block;
+      }
+      .add-tag-option {
+        display: block;
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: none;
+        color: #eaeaea;
+        padding: 4px 8px;
+        font-size: 12px;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+      .add-tag-option:hover {
+        background: #30363d;
+      }
+      .add-tag-none {
+        color: #484f58;
+        font-size: 12px;
+        padding: 4px 8px;
       }
       .modal-tags {
         display: flex;
@@ -708,19 +806,21 @@
           .map((id) => {
             const t = allTags.find((tg) => tg.id === id);
             return t
-              ? `<span class="tag-chip" style="background:${escapeHTML(t.color)}">${escapeHTML(t.label)}</span>`
+              ? `<span class="tag-chip" style="background:${escapeHTML(t.color)}">${escapeHTML(t.label)}<span class="tag-remove" data-action="remove-tag" data-tag-id="${escapeHTML(t.id)}" data-username="${escapeHTML(player.username)}">×</span></span>`
               : "";
           })
           .join("");
+        const notesHtml = player.notes
+          ? `<div class="card-notes" data-action="edit-notes" data-username="${escapeHTML(player.username)}">${escapeHTML(player.notes)}</div>`
+          : `<div class="card-notes-empty" data-action="edit-notes" data-username="${escapeHTML(player.username)}">+ add notes</div>`;
         return `<div class="card${pinClass}" data-username="${escapeHTML(player.username)}">
     <div class="card-body">
       <div class="card-name">${escapeHTML(player.username)}${player.pinned ? ' <span class="pin-badge">LIVE</span>' : ""}</div>
-      ${player.notes ? `<div class="card-notes">${escapeHTML(player.notes)}</div>` : ""}
-      ${tagChips ? `<div class="card-tags">${tagChips}</div>` : ""}
+      ${notesHtml}
+      <div class="card-tags">${tagChips}<span class="add-tag-wrap"><button class="add-tag-btn" data-action="add-tag" data-username="${escapeHTML(player.username)}">+ tag</button><div class="add-tag-dropdown" id="tag-dd-${escapeHTML(player.username)}"></div></span></div>
     </div>
     <div class="card-actions">
       <button class="icon-btn${pinActiveClass}" data-action="pin" data-username="${escapeHTML(player.username)}" title="Pin">📌</button>
-      <button class="icon-btn" data-action="edit" data-username="${escapeHTML(player.username)}" title="Edit">✏️</button>
       <button class="icon-btn danger" data-action="delete" data-username="${escapeHTML(player.username)}" title="Delete">🗑️</button>
     </div>
   </div>`;
@@ -818,15 +918,69 @@
               savePlayers(players);
               renderList();
             }
-          } else if (action === "edit") {
+          } else if (action === "edit-notes") {
+            const el = btn;
+            const username = el.getAttribute("data-username");
             const p = findPlayer(players, username);
-            if (p)
-              openModal({
-                username: p.username,
-                notes: p.notes,
-                isEdit: true,
-                tags: p.tags || [],
-              });
+            if (!p) return;
+            const textarea = document.createElement("textarea");
+            textarea.className = "card-notes-edit";
+            textarea.value = p.notes || "";
+            el.replaceWith(textarea);
+            textarea.focus();
+            function saveNotes() {
+              let players = loadPlayers();
+              const p = findPlayer(players, username);
+              if (p) {
+                p.notes = textarea.value.trim();
+                p.updatedAt = new Date().toISOString();
+                savePlayers(players);
+              }
+              renderList();
+            }
+            textarea.addEventListener("blur", saveNotes);
+            textarea.addEventListener("keydown", function(ev) {
+              if (ev.key === "Escape") { textarea.blur(); }
+            });
+          } else if (action === "remove-tag") {
+            const tagId = btn.getAttribute("data-tag-id");
+            const username = btn.getAttribute("data-username");
+            const p = findPlayer(players, username);
+            if (p) {
+              p.tags = (p.tags || []).filter(id => id !== tagId);
+              p.updatedAt = new Date().toISOString();
+              savePlayers(players);
+              renderList();
+            }
+          } else if (action === "add-tag") {
+            const username = btn.getAttribute("data-username");
+            const p = findPlayer(players, username);
+            if (!p) return;
+            const dd = btn.nextElementSibling;
+            // Close any other open dropdowns
+            document.querySelectorAll(".add-tag-dropdown.show").forEach(d => d.classList.remove("show"));
+            const allTags = loadTags();
+            const available = allTags.filter(t => !(p.tags || []).includes(t.id));
+            if (!available.length) {
+              dd.innerHTML = '<div class="add-tag-none">No more tags</div>';
+            } else {
+              dd.innerHTML = available.map(t =>
+                `<button class="add-tag-option" data-action="pick-tag" data-tag-id="${escapeHTML(t.id)}" data-username="${escapeHTML(username)}">${escapeHTML(t.label)}</button>`
+              ).join("");
+            }
+            dd.classList.toggle("show");
+            e.stopPropagation();
+          } else if (action === "pick-tag") {
+            const tagId = btn.getAttribute("data-tag-id");
+            const username = btn.getAttribute("data-username");
+            const p = findPlayer(players, username);
+            if (p) {
+              if (!p.tags) p.tags = [];
+              if (!p.tags.includes(tagId)) p.tags.push(tagId);
+              p.updatedAt = new Date().toISOString();
+              savePlayers(players);
+              renderList();
+            }
           } else if (action === "delete") {
             const card = btn.closest(".card");
             const actions = card.querySelector(".card-actions");
@@ -846,6 +1000,13 @@
           currentQuery = this.value;
           renderList();
         });
+
+      // Close tag dropdowns when clicking outside
+      document.addEventListener("click", function(e) {
+        if (!e.target.closest(".add-tag-wrap")) {
+          document.querySelectorAll(".add-tag-dropdown.show").forEach(d => d.classList.remove("show"));
+        }
+      });
 
       document
         .getElementById("search-clear")
