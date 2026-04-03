@@ -203,6 +203,27 @@
         color: #eaeaea;
         border-color: #eaeaea;
       }
+      .tag-filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+      .tag-filter-chip {
+        font-size: 12px;
+        border-radius: 10px;
+        padding: 3px 10px;
+        font-weight: 600;
+        color: #0d1117;
+        cursor: pointer;
+        opacity: 0.5;
+        border: 2px solid transparent;
+        transition: opacity 0.15s;
+      }
+      .tag-filter-chip.active {
+        opacity: 1;
+        border-color: #7ee787;
+      }
       .tag-manage-row {
         display: flex;
         align-items: center;
@@ -416,6 +437,7 @@
       <button class="manage-tags-btn" id="manage-tags-btn">🏷️ Tags</button>
     </div>
 
+    <div class="tag-filter-bar" id="tag-filter-bar"></div>
     <div id="list-container"></div>
 
     <div class="modal-overlay" id="modal-overlay">
@@ -563,6 +585,11 @@
             p.username.toLowerCase().includes(q),
           );
         }
+        if (activeTagFilters.length) {
+          filtered = filtered.filter((p) =>
+            activeTagFilters.every((id) => (p.tags || []).includes(id)),
+          );
+        }
         const pinned = filtered.filter((p) => p.pinned);
         const unpinned = filtered
           .filter((p) => !p.pinned)
@@ -572,6 +599,30 @@
 
       // --- Render Layer ---
       let currentQuery = "";
+      let activeTagFilters = [];
+
+      function renderTagFilterBar() {
+        const tags = loadTags();
+        const bar = document.getElementById("tag-filter-bar");
+        if (!tags.length) { bar.innerHTML = ""; return; }
+        bar.innerHTML = tags.map(t => {
+          const active = activeTagFilters.includes(t.id) ? " active" : "";
+          return `<span class="tag-filter-chip${active}" data-tag-id="${escapeHTML(t.id)}" style="background:${escapeHTML(t.color)}">${escapeHTML(t.label)}</span>`;
+        }).join("");
+      }
+
+      document.getElementById("tag-filter-bar").addEventListener("click", function(e) {
+        const chip = e.target.closest(".tag-filter-chip");
+        if (!chip) return;
+        const id = chip.getAttribute("data-tag-id");
+        if (activeTagFilters.includes(id)) {
+          activeTagFilters = activeTagFilters.filter(t => t !== id);
+        } else {
+          activeTagFilters.push(id);
+        }
+        renderTagFilterBar();
+        renderList();
+      });
 
       function escapeHTML(str) {
         const d = document.createElement("div");
@@ -607,6 +658,7 @@
       }
 
       function renderList() {
+        renderTagFilterBar();
         const container = document.getElementById("list-container");
         const players = loadPlayers();
         const { pinned, unpinned } = sortedPlayers(players, currentQuery);
