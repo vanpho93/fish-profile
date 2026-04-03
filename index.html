@@ -110,6 +110,90 @@
         align-items: center;
         gap: 6px;
       }
+      .card-name-text {
+        cursor: pointer;
+        padding: 1px 4px;
+        border-radius: 4px;
+      }
+      .card-name-text:hover {
+        background: #161b22;
+      }
+      .card-name-edit {
+        background: #161b22;
+        border: 1px solid #7ee787;
+        border-radius: 4px;
+        color: #eaeaea;
+        font-size: 15px;
+        font-weight: 700;
+        font-family: inherit;
+        padding: 1px 4px;
+        outline: none;
+        width: 200px;
+      }
+      .card-nickname {
+        font-size: 13px;
+        color: #8b949e;
+        cursor: pointer;
+        padding: 1px 4px;
+        border-radius: 4px;
+      }
+      .card-nickname:hover {
+        background: #161b22;
+      }
+      .card-nickname-empty {
+        font-size: 12px;
+        color: #484f58;
+        font-style: italic;
+        cursor: pointer;
+        padding: 1px 4px;
+        border-radius: 4px;
+      }
+      .card-nickname-empty:hover {
+        background: #161b22;
+      }
+      .card-nickname-edit {
+        background: #161b22;
+        border: 1px solid #7ee787;
+        border-radius: 4px;
+        color: #eaeaea;
+        font-size: 13px;
+        font-family: inherit;
+        padding: 1px 4px;
+        outline: none;
+        width: 150px;
+      }
+      .card-avatar {
+        font-size: 12px;
+        color: #8b949e;
+        cursor: pointer;
+        padding: 1px 4px;
+        border-radius: 4px;
+      }
+      .card-avatar:hover {
+        background: #161b22;
+      }
+      .card-avatar-empty {
+        font-size: 12px;
+        color: #484f58;
+        font-style: italic;
+        cursor: pointer;
+        padding: 1px 4px;
+        border-radius: 4px;
+      }
+      .card-avatar-empty:hover {
+        background: #161b22;
+      }
+      .card-avatar-edit {
+        background: #161b22;
+        border: 1px solid #7ee787;
+        border-radius: 4px;
+        color: #eaeaea;
+        font-size: 12px;
+        font-family: inherit;
+        padding: 1px 4px;
+        outline: none;
+        width: 150px;
+      }
       .pin-badge {
         background: #7ee787;
         color: #0d1117;
@@ -562,6 +646,40 @@
       .btn-danger:hover {
         opacity: 0.9;
       }
+      .toolbar-secondary {
+        justify-content: flex-start;
+      }
+      @media (max-width: 768px) {
+        .toolbar {
+          flex-wrap: wrap;
+        }
+        .search-wrap {
+          flex: 1 1 100%;
+        }
+        .add-btn,
+        .manage-tags-btn {
+          flex: 1 1 auto;
+          text-align: center;
+          font-size: 13px;
+          padding: 8px 10px;
+        }
+      }
+      @media (max-width: 480px) {
+        body {
+          padding: 10px;
+        }
+        h1 {
+          font-size: 17px;
+          margin-bottom: 12px;
+        }
+        .card {
+          padding: 10px;
+          gap: 8px;
+        }
+        .modal-card {
+          padding: 16px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -572,9 +690,11 @@
         <input type="text" id="search-input" placeholder="Search players…" />
         <button class="clear" id="search-clear">✕</button>
       </div>
-      <button class="add-btn" id="add-btn">+ Add Player</button>
+      <button class="add-btn" id="add-btn">+ Add</button>
       <button class="manage-tags-btn" id="bulk-add-btn">+ Bulk Add</button>
       <button class="manage-tags-btn" id="clear-pins-btn">📌 Clear Pins</button>
+    </div>
+    <div class="toolbar toolbar-secondary">
       <button class="manage-tags-btn" id="manage-tags-btn">🏷️ Tags</button>
       <button class="manage-tags-btn" id="export-btn">📤 Export</button>
       <button class="manage-tags-btn" id="import-btn">📥 Import</button>
@@ -752,7 +872,7 @@
         if (query) {
           const q = query.toLowerCase();
           filtered = players.filter((p) =>
-            p.username.toLowerCase().includes(q),
+            p.username.toLowerCase().includes(q) || (p.nickname && p.nickname.toLowerCase().includes(q)),
           );
         }
         if (activeTagFilters.length) {
@@ -818,7 +938,7 @@
           : `<div class="card-notes-empty" data-action="edit-notes" data-username="${escapeHTML(player.username)}">+ add notes</div>`;
         return `<div class="card${pinClass}" data-username="${escapeHTML(player.username)}">
     <div class="card-body">
-      <div class="card-name">${escapeHTML(player.username)}${player.pinned ? ' <span class="pin-badge">LIVE</span>' : ""}</div>
+      <div class="card-name"><span class="card-name-text" data-action="edit-username" data-username="${escapeHTML(player.username)}">${escapeHTML(player.username)}</span>${player.nickname ? ` <span class="card-nickname" data-action="edit-nickname" data-username="${escapeHTML(player.username)}">(${escapeHTML(player.nickname)})</span>` : ` <span class="card-nickname-empty" data-action="edit-nickname" data-username="${escapeHTML(player.username)}">+ nickname</span>`}${player.avatar ? ` <span class="card-avatar" data-action="edit-avatar" data-username="${escapeHTML(player.username)}">[${escapeHTML(player.avatar)}]</span>` : ` <span class="card-avatar-empty" data-action="edit-avatar" data-username="${escapeHTML(player.username)}">+ avatar</span>`}${player.pinned ? ' <span class="pin-badge">LIVE</span>' : ""}</div>
       ${notesHtml}
       <div class="card-tags">${tagChips}<span class="add-tag-wrap"><button class="add-tag-btn" data-action="add-tag" data-username="${escapeHTML(player.username)}">+ tag</button><div class="add-tag-dropdown" id="tag-dd-${escapeHTML(player.username)}"></div></span></div>
     </div>
@@ -921,6 +1041,106 @@
               savePlayers(players);
               renderList();
             }
+          } else if (action === "edit-avatar") {
+            const el = btn;
+            const username = el.getAttribute("data-username");
+            const p = findPlayer(players, username);
+            if (!p) return;
+            const input = document.createElement("input");
+            input.type = "text";
+            input.className = "card-avatar-edit";
+            input.value = p.avatar || "";
+            input.placeholder = "Avatar desc…";
+            el.replaceWith(input);
+            input.focus();
+            input.select();
+            let saved = false;
+            function saveAvatar() {
+              if (saved) return;
+              saved = true;
+              let players = loadPlayers();
+              const p = findPlayer(players, username);
+              if (p) {
+                p.avatar = input.value.trim();
+                p.updatedAt = new Date().toISOString();
+                savePlayers(players);
+              }
+              renderList();
+            }
+            input.addEventListener("blur", saveAvatar);
+            input.addEventListener("keydown", function(ev) {
+              if (ev.key === "Enter") input.blur();
+              if (ev.key === "Escape") { saved = true; renderList(); }
+            });
+          } else if (action === "edit-nickname") {
+            const el = btn;
+            const username = el.getAttribute("data-username");
+            const p = findPlayer(players, username);
+            if (!p) return;
+            const input = document.createElement("input");
+            input.type = "text";
+            input.className = "card-nickname-edit";
+            input.value = p.nickname || "";
+            input.placeholder = "Nickname…";
+            el.replaceWith(input);
+            input.focus();
+            input.select();
+            let saved = false;
+            function saveNickname() {
+              if (saved) return;
+              saved = true;
+              let players = loadPlayers();
+              const p = findPlayer(players, username);
+              if (p) {
+                p.nickname = input.value.trim();
+                p.updatedAt = new Date().toISOString();
+                savePlayers(players);
+              }
+              renderList();
+            }
+            input.addEventListener("blur", saveNickname);
+            input.addEventListener("keydown", function(ev) {
+              if (ev.key === "Enter") input.blur();
+              if (ev.key === "Escape") { saved = true; renderList(); }
+            });
+          } else if (action === "edit-username") {
+            const el = btn;
+            const oldUsername = el.getAttribute("data-username");
+            const input = document.createElement("input");
+            input.type = "text";
+            input.className = "card-name-edit";
+            input.value = oldUsername;
+            el.replaceWith(input);
+            input.focus();
+            input.select();
+            let saved = false;
+            function saveUsername() {
+              if (saved) return;
+              saved = true;
+              const newUsername = input.value.trim();
+              if (!newUsername || newUsername.toLowerCase() === oldUsername.toLowerCase()) {
+                renderList();
+                return;
+              }
+              let players = loadPlayers();
+              if (findPlayer(players, newUsername)) {
+                alert("A player with that username already exists.");
+                renderList();
+                return;
+              }
+              const p = findPlayer(players, oldUsername);
+              if (p) {
+                p.username = newUsername;
+                p.updatedAt = new Date().toISOString();
+                savePlayers(players);
+              }
+              renderList();
+            }
+            input.addEventListener("blur", saveUsername);
+            input.addEventListener("keydown", function(ev) {
+              if (ev.key === "Enter") input.blur();
+              if (ev.key === "Escape") { saved = true; renderList(); }
+            });
           } else if (action === "edit-notes") {
             const el = btn;
             const username = el.getAttribute("data-username");
