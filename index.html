@@ -475,6 +475,7 @@
         <button class="clear" id="search-clear">✕</button>
       </div>
       <button class="add-btn" id="add-btn">+ Add Player</button>
+      <button class="manage-tags-btn" id="bulk-add-btn">+ Bulk Add</button>
       <button class="manage-tags-btn" id="clear-pins-btn">📌 Clear Pins</button>
       <button class="manage-tags-btn" id="manage-tags-btn">🏷️ Tags</button>
     </div>
@@ -536,6 +537,19 @@
         </div>
         <div class="modal-buttons">
           <button class="btn-secondary" id="tags-modal-done">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="bulk-add-overlay">
+      <div class="modal-card">
+        <button class="modal-close" id="bulk-add-close">✕</button>
+        <div class="modal-title">Bulk Add Players</div>
+        <label for="bulk-add-input">Usernames (one per line)</label>
+        <textarea id="bulk-add-input" rows="8" placeholder="user1&#10;user2&#10;user3"></textarea>
+        <div class="modal-buttons">
+          <button class="btn-secondary" id="bulk-add-cancel">Cancel</button>
+          <button class="btn-primary" id="bulk-add-submit">Continue</button>
         </div>
       </div>
     </div>
@@ -1027,6 +1041,28 @@
           document.getElementById("manage-new-tag-label").value = "";
           renderTagsManager();
         });
+
+      document.getElementById("bulk-add-btn").addEventListener("click", function () {
+        document.getElementById("bulk-add-input").value = "";
+        document.getElementById("bulk-add-overlay").classList.add("show");
+        setTimeout(() => document.getElementById("bulk-add-input").focus(), 50);
+      });
+      document.getElementById("bulk-add-close").addEventListener("click", function () {
+        document.getElementById("bulk-add-overlay").classList.remove("show");
+      });
+      document.getElementById("bulk-add-cancel").addEventListener("click", function () {
+        document.getElementById("bulk-add-overlay").classList.remove("show");
+      });
+      document.getElementById("bulk-add-overlay").addEventListener("click", function (e) {
+        if (e.target === this) this.classList.remove("show");
+      });
+      document.getElementById("bulk-add-submit").addEventListener("click", function () {
+        const text = document.getElementById("bulk-add-input").value;
+        const usernames = text.split("\n").map(u => u.trim()).filter(Boolean);
+        if (!usernames.length) return;
+        document.getElementById("bulk-add-overlay").classList.remove("show");
+        openBulkPinModal(usernames);
+      });
 
       // --- Bulk Pin Modal ---
       let bulkPinUsernames = [];
