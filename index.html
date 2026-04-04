@@ -96,8 +96,8 @@
         margin-bottom: 8px;
         align-items: flex-start;
       }
-      .card.pinned {
-        border-color: #7ee787;
+      .card.tabled {
+        border-color: #58a6ff;
       }
       .card-body {
         flex: 1;
@@ -194,13 +194,50 @@
         outline: none;
         width: 150px;
       }
-      .pin-badge {
-        background: #7ee787;
+      .table-badge {
+        background: #58a6ff;
         color: #0d1117;
         font-size: 11px;
         border-radius: 4px;
         padding: 1px 5px;
         font-weight: 700;
+      }
+      .table-tabs {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+      .table-tab {
+        background: #21262d;
+        color: #8b949e;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        padding: 6px 14px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .table-tab:hover {
+        color: #eaeaea;
+        border-color: #eaeaea;
+      }
+      .table-tab.active {
+        background: #58a6ff;
+        color: #0d1117;
+        border-color: #58a6ff;
+      }
+      .table-select {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        color: #eaeaea;
+        padding: 4px 8px;
+        font-size: 13px;
+        outline: none;
+        cursor: pointer;
+      }
+      .table-select:focus {
+        border-color: #7ee787;
       }
       .card-notes {
         font-size: 13px;
@@ -605,19 +642,19 @@
       .modal-close:hover {
         color: #eaeaea;
       }
-      .bulk-pin-list {
+      .bulk-confirm-list {
         list-style: none;
         margin: 10px 0;
         padding: 0;
       }
-      .bulk-pin-list li {
+      .bulk-confirm-list li {
         padding: 6px 0;
         font-size: 14px;
         display: flex;
         align-items: center;
         gap: 8px;
       }
-      .bulk-pin-list .badge-new {
+      .bulk-confirm-list .badge-new {
         background: #7ee787;
         color: #0d1117;
         font-size: 11px;
@@ -625,7 +662,7 @@
         padding: 1px 6px;
         font-weight: 700;
       }
-      .bulk-pin-list .badge-existing {
+      .bulk-confirm-list .badge-existing {
         background: #30363d;
         color: #8b949e;
         font-size: 11px;
@@ -692,13 +729,24 @@
       </div>
       <button class="add-btn" id="add-btn">+ Add</button>
       <button class="manage-tags-btn" id="bulk-add-btn">+ Bulk Add</button>
-      <button class="manage-tags-btn" id="clear-pins-btn">📌 Clear Pins</button>
+    </div>
+    <div class="table-tabs" id="table-tabs">
+      <button class="table-tab active" data-table="0">All</button>
+      <button class="table-tab" data-table="1">Table 1</button>
+      <button class="table-tab" data-table="2">Table 2</button>
+      <button class="table-tab" data-table="3">Table 3</button>
+      <button class="table-tab" data-table="4">Table 4</button>
     </div>
     <div class="toolbar toolbar-secondary">
       <button class="manage-tags-btn" id="manage-tags-btn">🏷️ Tags</button>
       <button class="manage-tags-btn" id="export-btn">📤 Export</button>
       <button class="manage-tags-btn" id="import-btn">📥 Import</button>
-      <input type="file" id="import-file" accept=".json" style="display:none" />
+      <input
+        type="file"
+        id="import-file"
+        accept=".json"
+        style="display: none"
+      />
     </div>
 
     <div class="tag-filter-bar" id="tag-filter-bar"></div>
@@ -718,6 +766,14 @@
         </div>
         <label for="notes-input">Notes</label>
         <textarea id="notes-input" rows="4"></textarea>
+        <label for="table-input">Table</label>
+        <select class="table-select" id="table-input">
+          <option value="0">No Table</option>
+          <option value="1">Table 1</option>
+          <option value="2">Table 2</option>
+          <option value="3">Table 3</option>
+          <option value="4">Table 4</option>
+        </select>
         <label>Tags</label>
         <div class="modal-tags" id="modal-tags"></div>
         <div class="new-tag-form" id="new-tag-form">
@@ -767,7 +823,27 @@
         <button class="modal-close" id="bulk-add-close">✕</button>
         <div class="modal-title">Bulk Add Players</div>
         <label for="bulk-add-input">Usernames (one per line)</label>
-        <textarea id="bulk-add-input" rows="8" placeholder="user1&#10;user2&#10;user3"></textarea>
+        <textarea
+          id="bulk-add-input"
+          rows="8"
+          placeholder="user1&#10;user2&#10;user3"
+        ></textarea>
+        <button
+          class="btn-secondary"
+          id="bulk-add-clean"
+          type="button"
+          style="margin-top: 8px"
+        >
+          🧹 Clean
+        </button>
+        <label for="bulk-table-input">Table</label>
+        <select class="table-select" id="bulk-table-input">
+          <option value="0">No Table</option>
+          <option value="1">Table 1</option>
+          <option value="2">Table 2</option>
+          <option value="3">Table 3</option>
+          <option value="4">Table 4</option>
+        </select>
         <div class="modal-buttons">
           <button class="btn-secondary" id="bulk-add-cancel">Cancel</button>
           <button class="btn-primary" id="bulk-add-submit">Continue</button>
@@ -775,15 +851,14 @@
       </div>
     </div>
 
-    <div class="modal-overlay" id="bulk-pin-overlay">
+    <div class="modal-overlay" id="bulk-confirm-overlay">
       <div class="modal-card">
-        <button class="modal-close" id="bulk-pin-close">✕</button>
-        <div class="modal-title">Bulk Pin Players</div>
-        <ul class="bulk-pin-list" id="bulk-pin-list"></ul>
+        <button class="modal-close" id="bulk-confirm-close">✕</button>
+        <div class="modal-title">Bulk Add Players</div>
+        <ul class="bulk-confirm-list" id="bulk-confirm-list"></ul>
         <div class="modal-buttons">
-          <button class="btn-secondary" id="bulk-pin-cancel">Cancel</button>
-          <button class="btn-danger" id="bulk-pin-clear-add">Clear Pins &amp; Add</button>
-          <button class="btn-primary" id="bulk-pin-add-all">Add All</button>
+          <button class="btn-secondary" id="bulk-confirm-cancel">Cancel</button>
+          <button class="btn-primary" id="bulk-confirm-add">Add All</button>
         </div>
       </div>
     </div>
@@ -791,6 +866,32 @@
     <script>
       const STORAGE_KEY = "poker_player_notes";
       const TAGS_KEY = "poker_player_notes_tags";
+      const TABLE_KEY = "poker_table_assignments";
+
+      // --- Table Assignments (session-based) ---
+      function loadTableAssignments() {
+        try {
+          return JSON.parse(sessionStorage.getItem(TABLE_KEY)) || {};
+        } catch {
+          return {};
+        }
+      }
+      function saveTableAssignments(assignments) {
+        sessionStorage.setItem(TABLE_KEY, JSON.stringify(assignments));
+      }
+      function getPlayerTable(username) {
+        const a = loadTableAssignments();
+        return a[username.toLowerCase()] || 0;
+      }
+      function setPlayerTable(username, table) {
+        const a = loadTableAssignments();
+        if (table === 0) {
+          delete a[username.toLowerCase()];
+        } else {
+          a[username.toLowerCase()] = table;
+        }
+        saveTableAssignments(a);
+      }
 
       // --- Data Layer ---
       function loadPlayers() {
@@ -818,16 +919,17 @@
         if (idx !== -1) {
           players[idx].notes = data.notes;
           players[idx].updatedAt = now;
-          if (data.pinned !== undefined) players[idx].pinned = data.pinned;
           if (data.tags !== undefined) players[idx].tags = data.tags;
         } else {
           players.push({
             username: data.username,
             notes: data.notes || "",
-            pinned: data.pinned || false,
             tags: data.tags || [],
             updatedAt: now,
           });
+        }
+        if (data.table !== undefined) {
+          setPlayerTable(data.username, data.table);
         }
         return players;
       }
@@ -871,8 +973,10 @@
         let filtered = players;
         if (query) {
           const q = query.toLowerCase();
-          filtered = players.filter((p) =>
-            p.username.toLowerCase().includes(q) || (p.nickname && p.nickname.toLowerCase().includes(q)),
+          filtered = players.filter(
+            (p) =>
+              p.username.toLowerCase().includes(q) ||
+              (p.nickname && p.nickname.toLowerCase().includes(q)),
           );
         }
         if (activeTagFilters.length) {
@@ -880,39 +984,50 @@
             activeTagFilters.every((id) => (p.tags || []).includes(id)),
           );
         }
-        const pinned = filtered.filter((p) => p.pinned);
-        const unpinned = filtered
-          .filter((p) => !p.pinned)
-          .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
-        return { pinned, unpinned };
+        if (activeTableFilter > 0) {
+          filtered = filtered.filter(
+            (p) => getPlayerTable(p.username) === activeTableFilter,
+          );
+        }
+        return filtered.sort((a, b) =>
+          (b.updatedAt || "").localeCompare(a.updatedAt || ""),
+        );
       }
 
       // --- Render Layer ---
       let currentQuery = "";
       let activeTagFilters = [];
+      let activeTableFilter = 0;
 
       function renderTagFilterBar() {
         const tags = loadTags();
         const bar = document.getElementById("tag-filter-bar");
-        if (!tags.length) { bar.innerHTML = ""; return; }
-        bar.innerHTML = tags.map(t => {
-          const active = activeTagFilters.includes(t.id) ? " active" : "";
-          return `<span class="tag-filter-chip${active}" data-tag-id="${escapeHTML(t.id)}" style="background:${escapeHTML(t.color)}">${escapeHTML(t.label)}</span>`;
-        }).join("");
+        if (!tags.length) {
+          bar.innerHTML = "";
+          return;
+        }
+        bar.innerHTML = tags
+          .map((t) => {
+            const active = activeTagFilters.includes(t.id) ? " active" : "";
+            return `<span class="tag-filter-chip${active}" data-tag-id="${escapeHTML(t.id)}" style="background:${escapeHTML(t.color)}">${escapeHTML(t.label)}</span>`;
+          })
+          .join("");
       }
 
-      document.getElementById("tag-filter-bar").addEventListener("click", function(e) {
-        const chip = e.target.closest(".tag-filter-chip");
-        if (!chip) return;
-        const id = chip.getAttribute("data-tag-id");
-        if (activeTagFilters.includes(id)) {
-          activeTagFilters = activeTagFilters.filter(t => t !== id);
-        } else {
-          activeTagFilters.push(id);
-        }
-        renderTagFilterBar();
-        renderList();
-      });
+      document
+        .getElementById("tag-filter-bar")
+        .addEventListener("click", function (e) {
+          const chip = e.target.closest(".tag-filter-chip");
+          if (!chip) return;
+          const id = chip.getAttribute("data-tag-id");
+          if (activeTagFilters.includes(id)) {
+            activeTagFilters = activeTagFilters.filter((t) => t !== id);
+          } else {
+            activeTagFilters.push(id);
+          }
+          renderTagFilterBar();
+          renderList();
+        });
 
       function escapeHTML(str) {
         const d = document.createElement("div");
@@ -921,8 +1036,8 @@
       }
 
       function buildCard(player) {
-        const pinClass = player.pinned ? " pinned" : "";
-        const pinActiveClass = player.pinned ? " active" : "";
+        const table = getPlayerTable(player.username);
+        const tabledClass = table > 0 ? " tabled" : "";
         const allTags = loadTags();
         const playerTagIds = player.tags || [];
         const tagChips = playerTagIds
@@ -936,14 +1051,22 @@
         const notesHtml = player.notes
           ? `<div class="card-notes" data-action="edit-notes" data-username="${escapeHTML(player.username)}">${escapeHTML(player.notes)}</div>`
           : `<div class="card-notes-empty" data-action="edit-notes" data-username="${escapeHTML(player.username)}">+ add notes</div>`;
-        return `<div class="card${pinClass}" data-username="${escapeHTML(player.username)}">
+        const tableBadge =
+          table > 0 ? ` <span class="table-badge">T${table}</span>` : "";
+        const tableOptions = [0, 1, 2, 3, 4]
+          .map(
+            (t) =>
+              `<option value="${t}"${t === table ? " selected" : ""}>${t === 0 ? "No Table" : "Table " + t}</option>`,
+          )
+          .join("");
+        return `<div class="card${tabledClass}" data-username="${escapeHTML(player.username)}">
     <div class="card-body">
-      <div class="card-name"><span class="card-name-text" data-action="edit-username" data-username="${escapeHTML(player.username)}">${escapeHTML(player.username)}</span>${player.nickname ? ` <span class="card-nickname" data-action="edit-nickname" data-username="${escapeHTML(player.username)}">(${escapeHTML(player.nickname)})</span>` : ` <span class="card-nickname-empty" data-action="edit-nickname" data-username="${escapeHTML(player.username)}">+ nickname</span>`}${player.avatar ? ` <span class="card-avatar" data-action="edit-avatar" data-username="${escapeHTML(player.username)}">[${escapeHTML(player.avatar)}]</span>` : ` <span class="card-avatar-empty" data-action="edit-avatar" data-username="${escapeHTML(player.username)}">+ avatar</span>`}${player.pinned ? ' <span class="pin-badge">LIVE</span>' : ""}</div>
+      <div class="card-name"><span class="card-name-text" data-action="edit-username" data-username="${escapeHTML(player.username)}">${escapeHTML(player.username)}</span>${player.nickname ? ` <span class="card-nickname" data-action="edit-nickname" data-username="${escapeHTML(player.username)}">(${escapeHTML(player.nickname)})</span>` : ` <span class="card-nickname-empty" data-action="edit-nickname" data-username="${escapeHTML(player.username)}">+ nickname</span>`}${player.avatar ? ` <span class="card-avatar" data-action="edit-avatar" data-username="${escapeHTML(player.username)}">[${escapeHTML(player.avatar)}]</span>` : ` <span class="card-avatar-empty" data-action="edit-avatar" data-username="${escapeHTML(player.username)}">+ avatar</span>`}${tableBadge}</div>
       ${notesHtml}
       <div class="card-tags">${tagChips}<span class="add-tag-wrap"><button class="add-tag-btn" data-action="add-tag" data-username="${escapeHTML(player.username)}">+ tag</button><div class="add-tag-dropdown" id="tag-dd-${escapeHTML(player.username)}"></div></span></div>
     </div>
     <div class="card-actions">
-      <button class="icon-btn${pinActiveClass}" data-action="pin" data-username="${escapeHTML(player.username)}" title="Pin">📌</button>
+      <select class="table-select" data-action="set-table" data-username="${escapeHTML(player.username)}">${tableOptions}</select>
       <button class="icon-btn danger" data-action="delete" data-username="${escapeHTML(player.username)}" title="Delete">🗑️</button>
     </div>
   </div>`;
@@ -951,30 +1074,33 @@
 
       function renderList() {
         renderTagFilterBar();
+        renderTableTabs();
         const container = document.getElementById("list-container");
         const players = loadPlayers();
-        const { pinned, unpinned } = sortedPlayers(players, currentQuery);
+        const sorted = sortedPlayers(players, currentQuery);
         let html = "";
 
-        if (pinned.length === 0 && unpinned.length === 0) {
-          html = `<div class="empty-state">${currentQuery ? "No players match your search." : 'No players yet. Tap "+ Add Player" to get started.'}</div>`;
+        if (sorted.length === 0) {
+          html = `<div class="empty-state">${currentQuery || activeTableFilter ? "No players match your filter." : 'No players yet. Tap "+ Add" to get started.'}</div>`;
           container.innerHTML = html;
           return;
         }
 
-        if (pinned.length) {
-          html += `<div class="section-label">📌 Pinned (${pinned.length})</div>`;
-          pinned.forEach((p) => {
-            html += buildCard(p);
-          });
-        }
-
-        html += `<div class="section-label">All Players (${unpinned.length})</div>`;
-        unpinned.forEach((p) => {
+        const label =
+          activeTableFilter > 0 ? `Table ${activeTableFilter}` : "All Players";
+        html += `<div class="section-label">${label} (${sorted.length})</div>`;
+        sorted.forEach((p) => {
           html += buildCard(p);
         });
 
         container.innerHTML = html;
+      }
+
+      function renderTableTabs() {
+        document.querySelectorAll(".table-tab").forEach((tab) => {
+          const t = parseInt(tab.getAttribute("data-table"));
+          tab.classList.toggle("active", t === activeTableFilter);
+        });
       }
 
       // --- Modal Logic ---
@@ -999,6 +1125,7 @@
         isEdit = false,
         showNotice = false,
         tags = [],
+        table = 0,
       } = {}) {
         modalIsEdit = isEdit;
         modalOriginalUsername = username;
@@ -1009,6 +1136,7 @@
         document.getElementById("username-input").value = username;
         document.getElementById("username-input").disabled = false;
         document.getElementById("notes-input").value = notes;
+        document.getElementById("table-input").value = table;
         document.getElementById("username-error").style.display = "none";
         document.getElementById("modal-notice").style.display = showNotice
           ? "block"
@@ -1034,14 +1162,7 @@
           const username = btn.getAttribute("data-username");
           let players = loadPlayers();
 
-          if (action === "pin") {
-            const p = findPlayer(players, username);
-            if (p) {
-              p.pinned = !p.pinned;
-              savePlayers(players);
-              renderList();
-            }
-          } else if (action === "edit-avatar") {
+          if (action === "edit-avatar") {
             const el = btn;
             const username = el.getAttribute("data-username");
             const p = findPlayer(players, username);
@@ -1068,9 +1189,12 @@
               renderList();
             }
             input.addEventListener("blur", saveAvatar);
-            input.addEventListener("keydown", function(ev) {
+            input.addEventListener("keydown", function (ev) {
               if (ev.key === "Enter") input.blur();
-              if (ev.key === "Escape") { saved = true; renderList(); }
+              if (ev.key === "Escape") {
+                saved = true;
+                renderList();
+              }
             });
           } else if (action === "edit-nickname") {
             const el = btn;
@@ -1099,9 +1223,12 @@
               renderList();
             }
             input.addEventListener("blur", saveNickname);
-            input.addEventListener("keydown", function(ev) {
+            input.addEventListener("keydown", function (ev) {
               if (ev.key === "Enter") input.blur();
-              if (ev.key === "Escape") { saved = true; renderList(); }
+              if (ev.key === "Escape") {
+                saved = true;
+                renderList();
+              }
             });
           } else if (action === "edit-username") {
             const el = btn;
@@ -1118,7 +1245,10 @@
               if (saved) return;
               saved = true;
               const newUsername = input.value.trim();
-              if (!newUsername || newUsername.toLowerCase() === oldUsername.toLowerCase()) {
+              if (
+                !newUsername ||
+                newUsername.toLowerCase() === oldUsername.toLowerCase()
+              ) {
                 renderList();
                 return;
               }
@@ -1137,9 +1267,12 @@
               renderList();
             }
             input.addEventListener("blur", saveUsername);
-            input.addEventListener("keydown", function(ev) {
+            input.addEventListener("keydown", function (ev) {
               if (ev.key === "Enter") input.blur();
-              if (ev.key === "Escape") { saved = true; renderList(); }
+              if (ev.key === "Escape") {
+                saved = true;
+                renderList();
+              }
             });
           } else if (action === "edit-notes") {
             const el = btn;
@@ -1162,15 +1295,17 @@
               renderList();
             }
             textarea.addEventListener("blur", saveNotes);
-            textarea.addEventListener("keydown", function(ev) {
-              if (ev.key === "Escape") { textarea.blur(); }
+            textarea.addEventListener("keydown", function (ev) {
+              if (ev.key === "Escape") {
+                textarea.blur();
+              }
             });
           } else if (action === "remove-tag") {
             const tagId = btn.getAttribute("data-tag-id");
             const username = btn.getAttribute("data-username");
             const p = findPlayer(players, username);
             if (p) {
-              p.tags = (p.tags || []).filter(id => id !== tagId);
+              p.tags = (p.tags || []).filter((id) => id !== tagId);
               p.updatedAt = new Date().toISOString();
               savePlayers(players);
               renderList();
@@ -1181,15 +1316,22 @@
             if (!p) return;
             const dd = btn.nextElementSibling;
             // Close any other open dropdowns
-            document.querySelectorAll(".add-tag-dropdown.show").forEach(d => d.classList.remove("show"));
+            document
+              .querySelectorAll(".add-tag-dropdown.show")
+              .forEach((d) => d.classList.remove("show"));
             const allTags = loadTags();
-            const available = allTags.filter(t => !(p.tags || []).includes(t.id));
+            const available = allTags.filter(
+              (t) => !(p.tags || []).includes(t.id),
+            );
             if (!available.length) {
               dd.innerHTML = '<div class="add-tag-none">No more tags</div>';
             } else {
-              dd.innerHTML = available.map(t =>
-                `<button class="add-tag-option" data-action="pick-tag" data-tag-id="${escapeHTML(t.id)}" data-username="${escapeHTML(username)}">${escapeHTML(t.label)}</button>`
-              ).join("");
+              dd.innerHTML = available
+                .map(
+                  (t) =>
+                    `<button class="add-tag-option" data-action="pick-tag" data-tag-id="${escapeHTML(t.id)}" data-username="${escapeHTML(username)}">${escapeHTML(t.label)}</button>`,
+                )
+                .join("");
             }
             dd.classList.toggle("show");
             e.stopPropagation();
@@ -1217,6 +1359,17 @@
           }
         });
 
+      // Handle table select changes on cards
+      document
+        .getElementById("list-container")
+        .addEventListener("change", function (e) {
+          if (e.target.getAttribute("data-action") === "set-table") {
+            const username = e.target.getAttribute("data-username");
+            setPlayerTable(username, parseInt(e.target.value));
+            renderList();
+          }
+        });
+
       document
         .getElementById("search-input")
         .addEventListener("input", function () {
@@ -1225,9 +1378,11 @@
         });
 
       // Close tag dropdowns when clicking outside
-      document.addEventListener("click", function(e) {
+      document.addEventListener("click", function (e) {
         if (!e.target.closest(".add-tag-wrap")) {
-          document.querySelectorAll(".add-tag-dropdown.show").forEach(d => d.classList.remove("show"));
+          document
+            .querySelectorAll(".add-tag-dropdown.show")
+            .forEach((d) => d.classList.remove("show"));
         }
       });
 
@@ -1243,12 +1398,14 @@
         openModal();
       });
 
-      document.getElementById("clear-pins-btn").addEventListener("click", function () {
-        let players = loadPlayers();
-        players.forEach(p => p.pinned = false);
-        savePlayers(players);
-        renderList();
-      });
+      document
+        .getElementById("table-tabs")
+        .addEventListener("click", function (e) {
+          const tab = e.target.closest(".table-tab");
+          if (!tab) return;
+          activeTableFilter = parseInt(tab.getAttribute("data-table"));
+          renderList();
+        });
 
       document
         .getElementById("modal-close")
@@ -1290,14 +1447,25 @@
             return;
           }
 
-          if (modalIsEdit && username.toLowerCase() !== modalOriginalUsername.toLowerCase() && findPlayer(players, username)) {
+          if (
+            modalIsEdit &&
+            username.toLowerCase() !== modalOriginalUsername.toLowerCase() &&
+            findPlayer(players, username)
+          ) {
             errorEl.textContent = "A player with that username already exists.";
             errorEl.style.display = "block";
             return;
           }
 
-          if (modalIsEdit && username.toLowerCase() !== modalOriginalUsername.toLowerCase()) {
-            const idx = players.findIndex(p => p.username.toLowerCase() === modalOriginalUsername.toLowerCase());
+          if (
+            modalIsEdit &&
+            username.toLowerCase() !== modalOriginalUsername.toLowerCase()
+          ) {
+            const idx = players.findIndex(
+              (p) =>
+                p.username.toLowerCase() ===
+                modalOriginalUsername.toLowerCase(),
+            );
             if (idx !== -1) players[idx].username = username;
           }
 
@@ -1305,7 +1473,7 @@
             username: username,
             notes,
             tags: modalSelectedTags,
-            ...(modalIsEdit ? {} : { pinned: true }),
+            table: parseInt(document.getElementById("table-input").value),
           });
           savePlayers(players);
           closeModal();
@@ -1437,162 +1605,232 @@
           renderTagsManager();
         });
 
-      document.getElementById("bulk-add-btn").addEventListener("click", function () {
-        document.getElementById("bulk-add-input").value = "";
-        document.getElementById("bulk-add-overlay").classList.add("show");
-        setTimeout(() => document.getElementById("bulk-add-input").focus(), 50);
-      });
-      document.getElementById("bulk-add-close").addEventListener("click", function () {
-        document.getElementById("bulk-add-overlay").classList.remove("show");
-      });
-      document.getElementById("bulk-add-cancel").addEventListener("click", function () {
-        document.getElementById("bulk-add-overlay").classList.remove("show");
-      });
-      document.getElementById("bulk-add-overlay").addEventListener("click", function (e) {
-        if (e.target === this) this.classList.remove("show");
-      });
-      document.getElementById("bulk-add-submit").addEventListener("click", function () {
-        const text = document.getElementById("bulk-add-input").value;
-        const usernames = text.split("\n").map(u => u.trim()).filter(Boolean);
-        if (!usernames.length) return;
-        document.getElementById("bulk-add-overlay").classList.remove("show");
-        openBulkPinModal(usernames);
-      });
+      document
+        .getElementById("bulk-add-btn")
+        .addEventListener("click", function () {
+          document.getElementById("bulk-add-input").value = "";
+          document.getElementById("bulk-add-overlay").classList.add("show");
+          setTimeout(
+            () => document.getElementById("bulk-add-input").focus(),
+            50,
+          );
+        });
+      document
+        .getElementById("bulk-add-close")
+        .addEventListener("click", function () {
+          document.getElementById("bulk-add-overlay").classList.remove("show");
+        });
+      document
+        .getElementById("bulk-add-cancel")
+        .addEventListener("click", function () {
+          document.getElementById("bulk-add-overlay").classList.remove("show");
+        });
+      document
+        .getElementById("bulk-add-overlay")
+        .addEventListener("click", function (e) {
+          if (e.target === this) this.classList.remove("show");
+        });
+      document
+        .getElementById("bulk-add-clean")
+        .addEventListener("click", function () {
+          const ta = document.getElementById("bulk-add-input");
+          ta.value = ta.value
+            .split("\n")
+            .map((l) => l.trim())
+            .filter((l) => l.length >= 3)
+            .filter((l) => !l.includes(" BB"))
+            .filter((l) => !l.includes("GHANDC"))
+            .filter((l) => !l.includes("CAMEIOC"))
+            .filter((l) => !l.includes("смотт"))
+            .filter((l) => !l.includes("quadmonkey"))
+            .filter((l) => !l.includes("HANDS"))
+            .filter((l) => !l.includes("GAME LOG"))
+            .filter((l) => !l.includes("POKER FLIPS"))
+            .filter((l) => !l.includes("9 EMOJI"))
+            .filter((l) => l !== "High card")
+            .filter((l) => l !== "WPT Global")
+            .join("\n");
+        });
 
-      // --- Bulk Pin Modal ---
-      let bulkPinUsernames = [];
+      document
+        .getElementById("bulk-add-submit")
+        .addEventListener("click", function () {
+          const text = document.getElementById("bulk-add-input").value;
+          const usernames = text
+            .split("\n")
+            .map((u) => u.trim())
+            .filter(Boolean);
+          if (!usernames.length) return;
+          const table = parseInt(
+            document.getElementById("bulk-table-input").value,
+          );
+          document.getElementById("bulk-add-overlay").classList.remove("show");
+          openBulkConfirmModal(usernames, table);
+        });
 
-      function openBulkPinModal(usernames) {
-        bulkPinUsernames = usernames;
+      // --- Bulk Confirm Modal ---
+      let bulkConfirmUsernames = [];
+      let bulkConfirmTable = 0;
+
+      function openBulkConfirmModal(usernames, table) {
+        bulkConfirmUsernames = usernames;
+        bulkConfirmTable = table;
         const players = loadPlayers();
-        const list = document.getElementById("bulk-pin-list");
-        list.innerHTML = usernames.map(u => {
-          const existing = findPlayer(players, u);
-          const badge = existing
-            ? '<span class="badge-existing">EXISTING</span>'
-            : '<span class="badge-new">NEW</span>';
-          return `<li>${escapeHTML(u)} ${badge}</li>`;
-        }).join("");
-        document.getElementById("bulk-pin-overlay").classList.add("show");
+        const list = document.getElementById("bulk-confirm-list");
+        list.innerHTML = usernames
+          .map((u) => {
+            const existing = findPlayer(players, u);
+            const badge = existing
+              ? '<span class="badge-existing">EXISTING</span>'
+              : '<span class="badge-new">NEW</span>';
+            const tableLabel = table > 0 ? ` → Table ${table}` : "";
+            return `<li>${escapeHTML(u)} ${badge}${tableLabel}</li>`;
+          })
+          .join("");
+        document.getElementById("bulk-confirm-overlay").classList.add("show");
       }
 
-      function closeBulkPinModal() {
-        document.getElementById("bulk-pin-overlay").classList.remove("show");
+      function closeBulkConfirmModal() {
+        document
+          .getElementById("bulk-confirm-overlay")
+          .classList.remove("show");
       }
 
-      function executeBulkPin(clearExisting) {
+      function executeBulkAdd() {
         let players = loadPlayers();
-        if (clearExisting) {
-          players.forEach(p => p.pinned = false);
-        }
-        bulkPinUsernames.forEach(u => {
+        bulkConfirmUsernames.forEach((u) => {
           const existing = findPlayer(players, u);
-          if (existing) {
-            existing.pinned = true;
-          } else {
-            players = upsertPlayer(players, { username: u, notes: "", pinned: true, tags: [] });
+          if (!existing) {
+            players = upsertPlayer(players, {
+              username: u,
+              notes: "",
+              tags: [],
+            });
           }
+          setPlayerTable(u, bulkConfirmTable);
         });
         savePlayers(players);
-        closeBulkPinModal();
+        closeBulkConfirmModal();
         renderList();
       }
 
-      document.getElementById("bulk-pin-add-all").addEventListener("click", () => executeBulkPin(false));
-      document.getElementById("bulk-pin-clear-add").addEventListener("click", () => executeBulkPin(true));
-      document.getElementById("bulk-pin-cancel").addEventListener("click", closeBulkPinModal);
-      document.getElementById("bulk-pin-close").addEventListener("click", closeBulkPinModal);
-      document.getElementById("bulk-pin-overlay").addEventListener("click", function(e) {
-        if (e.target === this) closeBulkPinModal();
-      });
+      document
+        .getElementById("bulk-confirm-add")
+        .addEventListener("click", () => executeBulkAdd());
+      document
+        .getElementById("bulk-confirm-cancel")
+        .addEventListener("click", closeBulkConfirmModal);
+      document
+        .getElementById("bulk-confirm-close")
+        .addEventListener("click", closeBulkConfirmModal);
+      document
+        .getElementById("bulk-confirm-overlay")
+        .addEventListener("click", function (e) {
+          if (e.target === this) closeBulkConfirmModal();
+        });
 
       // --- Export / Import ---
-      document.getElementById("export-btn").addEventListener("click", function () {
-        const data = { players: loadPlayers(), tags: loadTags() };
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "fish-profiles-" + new Date().toISOString().slice(0, 10) + ".json";
-        a.click();
-        URL.revokeObjectURL(url);
-      });
+      document
+        .getElementById("export-btn")
+        .addEventListener("click", function () {
+          const data = { players: loadPlayers(), tags: loadTags() };
+          const blob = new Blob([JSON.stringify(data, null, 2)], {
+            type: "application/json",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download =
+            "fish-profiles-" + new Date().toISOString().slice(0, 10) + ".json";
+          a.click();
+          URL.revokeObjectURL(url);
+        });
 
-      document.getElementById("import-btn").addEventListener("click", function () {
-        document.getElementById("import-file").click();
-      });
+      document
+        .getElementById("import-btn")
+        .addEventListener("click", function () {
+          document.getElementById("import-file").click();
+        });
 
-      document.getElementById("import-file").addEventListener("change", function (e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function (ev) {
-          try {
-            const data = JSON.parse(ev.target.result);
-            if (!data.players || !Array.isArray(data.players)) {
-              alert("Invalid file: missing players array.");
-              return;
-            }
-            // Merge tags
-            if (Array.isArray(data.tags)) {
-              let existingTags = loadTags();
-              const existingIds = new Set(existingTags.map(t => t.id));
-              data.tags.forEach(t => {
-                if (!existingIds.has(t.id)) existingTags.push(t);
-              });
-              saveTags(existingTags);
-            }
-            // Merge players — concat notes with newline
-            let players = loadPlayers();
-            data.players.forEach(imported => {
-              const idx = players.findIndex(p => p.username.toLowerCase() === imported.username.toLowerCase());
-              if (idx !== -1) {
-                const oldNotes = players[idx].notes || "";
-                const newNotes = imported.notes || "";
-                if (newNotes && oldNotes) {
-                  players[idx].notes = oldNotes + "\n" + newNotes;
-                } else if (newNotes) {
-                  players[idx].notes = newNotes;
-                }
-                players[idx].updatedAt = new Date().toISOString();
-                if (imported.pinned) players[idx].pinned = true;
-                if (imported.tags) {
-                  const existing = new Set(players[idx].tags || []);
-                  imported.tags.forEach(t => existing.add(t));
-                  players[idx].tags = [...existing];
-                }
-              } else {
-                players.push({
-                  username: imported.username,
-                  notes: imported.notes || "",
-                  pinned: imported.pinned || false,
-                  tags: imported.tags || [],
-                  updatedAt: new Date().toISOString(),
-                });
+      document
+        .getElementById("import-file")
+        .addEventListener("change", function (e) {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = function (ev) {
+            try {
+              const data = JSON.parse(ev.target.result);
+              if (!data.players || !Array.isArray(data.players)) {
+                alert("Invalid file: missing players array.");
+                return;
               }
-            });
-            savePlayers(players);
-            renderList();
-            alert("Imported " + data.players.length + " player(s).");
-          } catch (err) {
-            alert("Failed to import: " + err.message);
-          }
-        };
-        reader.readAsText(file);
-        this.value = "";
-      });
+              // Merge tags
+              if (Array.isArray(data.tags)) {
+                let existingTags = loadTags();
+                const existingIds = new Set(existingTags.map((t) => t.id));
+                data.tags.forEach((t) => {
+                  if (!existingIds.has(t.id)) existingTags.push(t);
+                });
+                saveTags(existingTags);
+              }
+              // Merge players — concat notes with newline
+              let players = loadPlayers();
+              data.players.forEach((imported) => {
+                const idx = players.findIndex(
+                  (p) =>
+                    p.username.toLowerCase() ===
+                    imported.username.toLowerCase(),
+                );
+                if (idx !== -1) {
+                  const oldNotes = players[idx].notes || "";
+                  const newNotes = imported.notes || "";
+                  if (newNotes && oldNotes) {
+                    players[idx].notes = oldNotes + "\n" + newNotes;
+                  } else if (newNotes) {
+                    players[idx].notes = newNotes;
+                  }
+                  players[idx].updatedAt = new Date().toISOString();
+                  if (imported.tags) {
+                    const existing = new Set(players[idx].tags || []);
+                    imported.tags.forEach((t) => existing.add(t));
+                    players[idx].tags = [...existing];
+                  }
+                } else {
+                  players.push({
+                    username: imported.username,
+                    notes: imported.notes || "",
+                    tags: imported.tags || [],
+                    updatedAt: new Date().toISOString(),
+                  });
+                }
+              });
+              savePlayers(players);
+              renderList();
+              alert("Imported " + data.players.length + " player(s).");
+            } catch (err) {
+              alert("Failed to import: " + err.message);
+            }
+          };
+          reader.readAsText(file);
+          this.value = "";
+        });
 
       // --- Deep-Link Handler ---
       (function handleDeepLink() {
         const params = new URLSearchParams(window.location.search);
 
-        const pinUsernames = params.get("pin_usernames");
-        if (pinUsernames) {
+        const tableUsernames = params.get("table_usernames");
+        const tableNum = parseInt(params.get("table") || "1");
+        if (tableUsernames) {
           history.replaceState({}, "", window.location.pathname);
-          const usernames = pinUsernames.split(",").map(u => u.trim()).filter(Boolean);
+          const usernames = tableUsernames
+            .split(",")
+            .map((u) => u.trim())
+            .filter(Boolean);
           if (usernames.length) {
             renderList();
-            openBulkPinModal(usernames);
+            openBulkConfirmModal(usernames, tableNum);
             return;
           }
         }
@@ -1608,8 +1846,6 @@
         const player = findPlayer(players, username);
 
         if (player) {
-          player.pinned = true;
-          savePlayers(players);
           renderList();
           const card = document.querySelector(
             `.card[data-username="${CSS.escape(player.username)}"]`,
@@ -1621,6 +1857,7 @@
             notes: player.notes,
             isEdit: true,
             tags: player.tags || [],
+            table: getPlayerTable(player.username),
           });
         } else {
           openModal({ username, showNotice: true });
