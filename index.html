@@ -99,6 +99,23 @@
       .card.tabled {
         border-color: #58a6ff;
       }
+      .card.highlighted {
+        background: #1a1a0d;
+        border-color: #f0c040;
+        box-shadow: 0 0 8px rgba(240, 192, 64, 0.3);
+      }
+      .highlight-badge {
+        background: #f0c040;
+        color: #0d1117;
+        font-size: 11px;
+        border-radius: 4px;
+        padding: 1px 5px;
+        font-weight: 700;
+      }
+      .icon-btn.highlight-active {
+        color: #f0c040;
+        border-color: #f0c040;
+      }
       .card-body {
         flex: 1;
         min-width: 0;
@@ -730,26 +747,21 @@
       <button class="add-btn" id="add-btn">+ Add</button>
       <button class="manage-tags-btn" id="bulk-add-btn">+ Bulk Add</button>
     </div>
+    <div class="tag-filter-bar" id="tag-filter-bar"></div>
     <div class="table-tabs" id="table-tabs">
       <button class="table-tab active" data-table="0">All</button>
       <button class="table-tab" data-table="1">Table 1</button>
       <button class="table-tab" data-table="2">Table 2</button>
       <button class="table-tab" data-table="3">Table 3</button>
       <button class="table-tab" data-table="4">Table 4</button>
+      <button class="manage-tags-btn" id="clear-table-btn" style="display:none">🗑️ Clear Table</button>
+      <span style="margin-left:auto;display:flex;gap:6px">
+        <button class="manage-tags-btn" id="manage-tags-btn">🏷️ Tags</button>
+        <button class="manage-tags-btn" id="export-btn">📤 Export</button>
+        <button class="manage-tags-btn" id="import-btn">📥 Import</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" />
+      </span>
     </div>
-    <div class="toolbar toolbar-secondary">
-      <button class="manage-tags-btn" id="manage-tags-btn">🏷️ Tags</button>
-      <button class="manage-tags-btn" id="export-btn">📤 Export</button>
-      <button class="manage-tags-btn" id="import-btn">📥 Import</button>
-      <input
-        type="file"
-        id="import-file"
-        accept=".json"
-        style="display: none"
-      />
-    </div>
-
-    <div class="tag-filter-bar" id="tag-filter-bar"></div>
     <div id="list-container"></div>
 
     <div class="modal-overlay" id="modal-overlay">
@@ -868,6 +880,22 @@
       const TAGS_KEY = "poker_player_notes_tags";
       const TABLE_KEY = "poker_table_assignments";
 
+      const HIGHLIGHT_KEY = "poker_highlights";
+
+      // --- Highlight (session-based) ---
+      function loadHighlights() {
+        try { return JSON.parse(sessionStorage.getItem(HIGHLIGHT_KEY)) || {}; }
+        catch { return {}; }
+      }
+      function saveHighlights(h) { sessionStorage.setItem(HIGHLIGHT_KEY, JSON.stringify(h)); }
+      function isHighlighted(username) { return !!loadHighlights()[username.toLowerCase()]; }
+      function toggleHighlight(username) {
+        const h = loadHighlights();
+        const k = username.toLowerCase();
+        if (h[k]) delete h[k]; else h[k] = true;
+        saveHighlights(h);
+      }
+
       // --- Table Assignments (session-based) ---
       function loadTableAssignments() {
         try {
@@ -925,6 +953,7 @@
             username: data.username,
             notes: data.notes || "",
             tags: data.tags || [],
+            createdAt: now,
             updatedAt: now,
           });
         }
@@ -989,9 +1018,16 @@
             (p) => getPlayerTable(p.username) === activeTableFilter,
           );
         }
-        return filtered.sort((a, b) =>
-          (b.updatedAt || "").localeCompare(a.updatedAt || ""),
-        );
+        // Sort: highlighted first, then preserve array order
+        const allPlayers = loadPlayers();
+        const indexMap = {};
+        allPlayers.forEach((p, i) => indexMap[p.username.toLowerCase()] = i);
+        return filtered.sort((a, b) => {
+          const ha = isHighlighted(a.username) ? 0 : 1;
+          const hb = isHighlighted(b.username) ? 0 : 1;
+          if (ha !== hb) return ha - hb;
+          return (indexMap[a.username.toLowerCase()] ?? 9999) - (indexMap[b.username.toLowerCase()] ?? 9999);
+        });
       }
 
       // --- Render Layer ---
@@ -1059,13 +1095,18 @@
               `<option value="${t}"${t === table ? " selected" : ""}>${t === 0 ? "No Table" : "Table " + t}</option>`,
           )
           .join("");
-        return `<div class="card${tabledClass}" data-username="${escapeHTML(player.username)}">
+        const hl = isHighlighted(player.username);
+        const hlClass = hl ? " highlighted" : "";
+        const hlBtnClass = hl ? " highlight-active" : "";
+        const hlBadge = hl ? ' <span class="highlight-badge">⭐</span>' : "";
+        return `<div class="card${tabledClass}${hlClass}" data-username="${escapeHTML(player.username)}">
     <div class="card-body">
-      <div class="card-name"><span class="card-name-text" data-action="edit-username" data-username="${escapeHTML(player.username)}">${escapeHTML(player.username)}</span>${player.nickname ? ` <span class="card-nickname" data-action="edit-nickname" data-username="${escapeHTML(player.username)}">(${escapeHTML(player.nickname)})</span>` : ` <span class="card-nickname-empty" data-action="edit-nickname" data-username="${escapeHTML(player.username)}">+ nickname</span>`}${player.avatar ? ` <span class="card-avatar" data-action="edit-avatar" data-username="${escapeHTML(player.username)}">[${escapeHTML(player.avatar)}]</span>` : ` <span class="card-avatar-empty" data-action="edit-avatar" data-username="${escapeHTML(player.username)}">+ avatar</span>`}${tableBadge}</div>
+      <div class="card-name"><span class="card-name-text" data-action="edit-username" data-username="${escapeHTML(player.username)}">${escapeHTML(player.username)}</span>${player.nickname ? ` <span class="card-nickname" data-action="edit-nickname" data-username="${escapeHTML(player.username)}">(${escapeHTML(player.nickname)})</span>` : ` <span class="card-nickname-empty" data-action="edit-nickname" data-username="${escapeHTML(player.username)}">+ nickname</span>`}${player.avatar ? ` <span class="card-avatar" data-action="edit-avatar" data-username="${escapeHTML(player.username)}">[${escapeHTML(player.avatar)}]</span>` : ` <span class="card-avatar-empty" data-action="edit-avatar" data-username="${escapeHTML(player.username)}">+ avatar</span>`}${tableBadge}${hlBadge}</div>
       ${notesHtml}
       <div class="card-tags">${tagChips}<span class="add-tag-wrap"><button class="add-tag-btn" data-action="add-tag" data-username="${escapeHTML(player.username)}">+ tag</button><div class="add-tag-dropdown" id="tag-dd-${escapeHTML(player.username)}"></div></span></div>
     </div>
     <div class="card-actions">
+      <button class="icon-btn${hlBtnClass}" data-action="highlight" data-username="${escapeHTML(player.username)}" title="Highlight">⭐</button>
       <select class="table-select" data-action="set-table" data-username="${escapeHTML(player.username)}">${tableOptions}</select>
       <button class="icon-btn danger" data-action="delete" data-username="${escapeHTML(player.username)}" title="Delete">🗑️</button>
     </div>
@@ -1101,6 +1142,8 @@
           const t = parseInt(tab.getAttribute("data-table"));
           tab.classList.toggle("active", t === activeTableFilter);
         });
+        document.getElementById("clear-table-btn").style.display =
+          activeTableFilter > 0 ? "" : "none";
       }
 
       // --- Modal Logic ---
@@ -1162,7 +1205,10 @@
           const username = btn.getAttribute("data-username");
           let players = loadPlayers();
 
-          if (action === "edit-avatar") {
+          if (action === "highlight") {
+            toggleHighlight(username);
+            renderList();
+          } else if (action === "edit-avatar") {
             const el = btn;
             const username = el.getAttribute("data-username");
             const p = findPlayer(players, username);
@@ -1406,6 +1452,16 @@
           activeTableFilter = parseInt(tab.getAttribute("data-table"));
           renderList();
         });
+
+      document.getElementById("clear-table-btn").addEventListener("click", function () {
+        if (!activeTableFilter) return;
+        const a = loadTableAssignments();
+        Object.keys(a).forEach(k => {
+          if (a[k] === activeTableFilter) delete a[k];
+        });
+        saveTableAssignments(a);
+        renderList();
+      });
 
       document
         .getElementById("modal-close")
