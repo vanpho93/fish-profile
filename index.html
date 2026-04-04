@@ -868,6 +868,14 @@
         <button class="modal-close" id="bulk-confirm-close">✕</button>
         <div class="modal-title">Bulk Add Players</div>
         <ul class="bulk-confirm-list" id="bulk-confirm-list"></ul>
+        <label for="bulk-confirm-table">Table</label>
+        <select class="table-select" id="bulk-confirm-table">
+          <option value="0">No Table</option>
+          <option value="1">Table 1</option>
+          <option value="2">Table 2</option>
+          <option value="3">Table 3</option>
+          <option value="4">Table 4</option>
+        </select>
         <div class="modal-buttons">
           <button class="btn-secondary" id="bulk-confirm-cancel">Cancel</button>
           <button class="btn-primary" id="bulk-confirm-add">Add All</button>
@@ -1731,6 +1739,7 @@
       function openBulkConfirmModal(usernames, table) {
         bulkConfirmUsernames = usernames;
         bulkConfirmTable = table;
+        document.getElementById("bulk-confirm-table").value = table;
         const players = loadPlayers();
         const list = document.getElementById("bulk-confirm-list");
         list.innerHTML = usernames
@@ -1739,8 +1748,7 @@
             const badge = existing
               ? '<span class="badge-existing">EXISTING</span>'
               : '<span class="badge-new">NEW</span>';
-            const tableLabel = table > 0 ? ` → Table ${table}` : "";
-            return `<li>${escapeHTML(u)} ${badge}${tableLabel}</li>`;
+            return `<li>${escapeHTML(u)} ${badge}</li>`;
           })
           .join("");
         document.getElementById("bulk-confirm-overlay").classList.add("show");
@@ -1753,6 +1761,7 @@
       }
 
       function executeBulkAdd() {
+        const table = parseInt(document.getElementById("bulk-confirm-table").value);
         let players = loadPlayers();
         bulkConfirmUsernames.forEach((u) => {
           const existing = findPlayer(players, u);
@@ -1763,7 +1772,7 @@
               tags: [],
             });
           }
-          setPlayerTable(u, bulkConfirmTable);
+          setPlayerTable(u, table);
         });
         savePlayers(players);
         closeBulkConfirmModal();
