@@ -484,6 +484,38 @@
         padding: 3px 6px;
         font-size: 12px;
       }
+      .search-result-card {
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 8px;
+        padding: 10px 12px;
+        display: flex;
+        gap: 10px;
+        margin-bottom: 6px;
+        align-items: center;
+      }
+      .search-result-card .sr-name {
+        font-weight: 700;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+      .search-result-card .sr-nickname {
+        color: #8b949e;
+        font-size: 13px;
+      }
+      .search-result-card .sr-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        flex: 1;
+        min-width: 0;
+      }
+      .search-result-card .sr-actions {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        flex-shrink: 0;
+      }
       .card-actions {
         display: flex;
         gap: 6px;
@@ -734,6 +766,39 @@
           padding: 16px;
         }
       }
+      .cheat-modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+        font-size: 13px;
+        line-height: 1.6;
+        color: #c9d1d9;
+      }
+      .cheat-modal-body h1 {
+        font-size: 16px;
+        color: #7ee787;
+        margin: 16px 0 8px;
+        text-align: left;
+      }
+      .cheat-modal-body h1:first-child {
+        margin-top: 0;
+      }
+      .cheat-modal-body h2 {
+        font-size: 14px;
+        color: #58a6ff;
+        margin: 12px 0 4px;
+      }
+      .cheat-modal-body ul {
+        margin: 4px 0 8px 18px;
+        padding: 0;
+      }
+      .cheat-modal-body li {
+        margin-bottom: 2px;
+      }
+      .cheat-modal-body hr {
+        border: none;
+        border-top: 1px solid #30363d;
+        margin: 12px 0;
+      }
     </style>
   </head>
   <body>
@@ -746,8 +811,10 @@
       </div>
       <button class="add-btn" id="add-btn">+ Add</button>
       <button class="manage-tags-btn" id="bulk-add-btn">+ Bulk Add</button>
+      <button class="manage-tags-btn" id="cheat-btn">📖 Cheat Sheet</button>
     </div>
     <div class="tag-filter-bar" id="tag-filter-bar"></div>
+    <div id="search-results" style="display:none"></div>
     <div class="table-tabs" id="table-tabs">
       <button class="table-tab active" data-table="0">All</button>
       <button class="table-tab" data-table="1">Table 1</button>
@@ -883,6 +950,99 @@
       </div>
     </div>
 
+    <div class="modal-overlay" id="cheat-overlay">
+      <div class="modal-card" style="width:min(600px,95vw)">
+        <button class="modal-close" id="cheat-close">✕</button>
+        <div class="modal-title">🧠 Poker Exploit Cheat Sheet</div>
+        <div class="cheat-modal-body">
+<h1>🟢 PRE-FLOP EXPLOITS</h1>
+<h2>🐟 Calls too much (calling station)</h2>
+<ul><li>Play MORE hands</li><li>Value bet thinner</li><li>Bluff LESS / almost never</li><li>If calling shoves wide → tighten slightly</li></ul>
+<h2>🧱 Folds too much (nits, weak blinds)</h2>
+<ul><li>Open MUCH wider</li><li>Print with steals</li><li>Expect stronger range when they continue</li></ul>
+<h2>🐒 Maniac (3-bets too much / too loose)</h2>
+<ul><li>Play MORE hands aggressively</li><li>Don't 3-bet medium hands</li><li>3-bet: Strong hands → value, Weak hands → bluffs</li><li>Flat medium hands → keep dominated hands in</li></ul>
+<h2>🚫 Doesn't squeeze enough</h2>
+<ul><li>Open wider</li><li>Flat more</li><li>3-bet more</li><li>When they act → FOLD easily</li></ul>
+<h2>💣 Squeezes too much (or pool is passive)</h2>
+<ul><li>Squeeze MORE yourself</li><li>Especially from BB</li></ul>
+<h2>🤪 Wide all-in ranges (multiway)</h2>
+<ul><li>Call wider (~33% equity needed)</li><li>Prefer suited broadways &gt; small pairs</li></ul>
+<hr>
+<h1>🔵 POST-FLOP EXPLOITS</h1>
+<h2>🪨 Calls too much</h2>
+<ul><li>No bluffing</li><li>Bet BIG for value</li><li>Play face-up</li></ul>
+<h2>🧻 Folds too much</h2>
+<ul><li>Bluff MORE</li><li>Use SMALL sizes</li><li>Attack weak ranges</li></ul>
+<h2>🧠 Inelastic ranges (don't adjust to sizing)</h2>
+<ul><li>Calls too much → BET BIG</li><li>Folds too much → BET SMALL</li><li>Play face-up</li></ul>
+<h2>🐌 Slow plays too much</h2>
+<ul><li>Bet MORE often</li><li>Use MEDIUM sizes</li><li>Less fear of check-raise</li><li>If called → slow down later streets</li></ul>
+<h2>🎯 Doesn't bluff enough</h2>
+<ul><li>Overfold</li><li>Only call with hands beating value</li></ul>
+<h2>🧨 Bluffs too much</h2>
+<ul><li>Call more (wider bluff catch)</li><li>Check/raise more</li></ul>
+<h2>🎭 Straightforward player</h2>
+<ul><li>Aggression = strong</li><li>Passivity = weak</li><li>Bet when they check</li><li>Fold when they show aggression</li></ul>
+<hr>
+<h1>🔴 TURN &amp; RIVER EXPLOITS</h1>
+<h2>🧊 Overfolds turn</h2>
+<ul><li>Double barrel more</li></ul>
+<h2>🪶 Calls flop, folds turn</h2>
+<ul><li>Bet flop → bet turn</li><li>Use SMALL turn size</li></ul>
+<h2>🧱 Under-bluffs river</h2>
+<ul><li>Never bluff catch</li><li>Fold marginal hands</li></ul>
+<h2>🐟 Overcalls river</h2>
+<ul><li>Never bluff</li><li>Thin value bet HARD</li></ul>
+<h2>🧠 Doesn't thin value bet</h2>
+<ul><li>Call more with bluff catchers</li><li>Their range is capped</li></ul>
+<hr>
+<h1>🟣 BETTING &amp; RANGE EXPLOITS</h1>
+<h2>📏 Bet size tells</h2>
+<ul><li>Big = strong → OVERFOLD</li><li>Medium = face-up play</li><li>Obvious bluff → RAISE BIG</li></ul>
+<h2>🎯 Raises for information</h2>
+<ul><li>Bet more</li><li>Use sizes that induce raises</li><li>Raise → fold weak hands easily</li></ul>
+<h2>🔁 Unbalanced aggression (bets too much)</h2>
+<ul><li>Don't fold</li><li>Bluff catch more</li><li>Check/raise more</li></ul>
+<h2>🧊 Too passive (doesn't bet enough)</h2>
+<ul><li>Lead more</li><li>Bluff catch less</li></ul>
+<hr>
+<h1>⚔️ RANGE VS RANGE EXPLOITS</h1>
+<h2>🪓 Capped range opponent</h2>
+<ul><li>Attack aggressively</li><li>Check/raise / re-raise</li><li>If they fold → bluff more</li><li>If they call → value heavy</li></ul>
+<h2>🎣 Plays capped range aggressively</h2>
+<ul><li>Induce bluffs</li><li>Punish with raises</li></ul>
+<hr>
+<h1>🔥 DRAWS &amp; BOARD PLAY</h1>
+<h2>💧 Doesn't semi-bluff draws</h2>
+<ul><li>Bet more &amp; bigger</li><li>Their aggression = strong → respect</li></ul>
+<h2>🔥 Plays draws passively</h2>
+<ul><li>Attack immediately (current street)</li></ul>
+<hr>
+<h1>🧩 META EXPLOITS</h1>
+<h2>📈 Increase volume vs weak players</h2>
+<ul><li>Play MORE hands vs mistakes</li></ul>
+<h2>🧠 "They always have it" heuristic</h2>
+<ul><li>Weak player + aggression (turn/river) → BELIEVE THEM</li></ul>
+<hr>
+<h1>⚡ QUICK DECISION TREE</h1>
+<ul>
+<li>Calls too much → Value big, no bluff</li>
+<li>Folds too much → Bluff small, often</li>
+<li>Aggressive/bluffy → Call down more</li>
+<li>Passive → Bet more</li>
+<li>Overfold turn → Double barrel</li>
+<li>Underbluffs river → Fold marginal</li>
+<li>Overcalls river → Thin value, no bluff</li>
+<li>Capped → Attack hard</li>
+</ul>
+        </div>
+        <div class="modal-buttons">
+          <button class="btn-secondary" id="cheat-done">Close</button>
+        </div>
+      </div>
+    </div>
+
     <script>
       const STORAGE_KEY = "poker_player_notes";
       const TAGS_KEY = "poker_player_notes_tags";
@@ -1006,16 +1166,8 @@
         return players.filter((p) => p.username.toLowerCase() !== lower);
       }
 
-      function sortedPlayers(players, query) {
+      function sortedPlayers(players) {
         let filtered = players;
-        if (query) {
-          const q = query.toLowerCase();
-          filtered = players.filter(
-            (p) =>
-              p.username.toLowerCase().includes(q) ||
-              (p.nickname && p.nickname.toLowerCase().includes(q)),
-          );
-        }
         if (activeTagFilters.length) {
           filtered = filtered.filter((p) =>
             activeTagFilters.every((id) => (p.tags || []).includes(id)),
@@ -1126,11 +1278,11 @@
         renderTableTabs();
         const container = document.getElementById("list-container");
         const players = loadPlayers();
-        const sorted = sortedPlayers(players, currentQuery);
+        const sorted = sortedPlayers(players);
         let html = "";
 
         if (sorted.length === 0) {
-          html = `<div class="empty-state">${currentQuery || activeTableFilter ? "No players match your filter." : 'No players yet. Tap "+ Add" to get started.'}</div>`;
+          html = `<div class="empty-state">${activeTableFilter ? "No players in this table." : 'No players yet. Tap "+ Add" to get started.'}</div>`;
           container.innerHTML = html;
           return;
         }
@@ -1153,6 +1305,71 @@
         document.getElementById("clear-table-btn").style.display =
           activeTableFilter > 0 ? "" : "none";
       }
+
+      function buildSearchResultCard(player) {
+        const allTags = loadTags();
+        const table = getPlayerTable(player.username);
+        const tagChips = (player.tags || []).map(id => {
+          const t = allTags.find(tg => tg.id === id);
+          return t ? `<span class="tag-chip" style="background:${escapeHTML(t.color)}">${escapeHTML(t.label)}</span>` : "";
+        }).join("");
+        const tableBadge = table > 0 ? `<span class="table-badge">T${table}</span>` : "";
+        const tableOptions = [0,1,2,3,4].map(t =>
+          `<option value="${t}"${t === table ? " selected" : ""}>${t === 0 ? "No Table" : "Table " + t}</option>`
+        ).join("");
+        const nickname = player.nickname ? ` <span class="sr-nickname">(${escapeHTML(player.nickname)})</span>` : "";
+        return `<div class="search-result-card" data-username="${escapeHTML(player.username)}">
+          <span class="sr-name">${escapeHTML(player.username)}${nickname}</span>
+          ${tableBadge}
+          <div class="sr-tags">${tagChips}</div>
+          <div class="sr-actions">
+            <select class="table-select" data-action="search-set-table" data-username="${escapeHTML(player.username)}">${tableOptions}</select>
+          </div>
+        </div>`;
+      }
+
+      let searchFocused = false;
+
+      function renderSearchResults() {
+        const container = document.getElementById("search-results");
+        const mainContent = document.getElementById("table-tabs");
+        const listContainer = document.getElementById("list-container");
+        const tagFilterBar = document.getElementById("tag-filter-bar");
+        const showSearch = currentQuery && searchFocused;
+        if (!showSearch) {
+          container.style.display = "none";
+          container.innerHTML = "";
+          mainContent.style.display = "";
+          listContainer.style.display = "";
+          tagFilterBar.style.display = "";
+          return;
+        }
+        mainContent.style.display = "none";
+        listContainer.style.display = "none";
+        tagFilterBar.style.display = "none";
+        container.style.display = "";
+        const players = loadPlayers();
+        const q = currentQuery.toLowerCase();
+        const results = players.filter(p =>
+          p.username.toLowerCase().includes(q) ||
+          (p.nickname && p.nickname.toLowerCase().includes(q))
+        );
+        if (!results.length) {
+          container.innerHTML = '<div class="empty-state">No players found.</div>';
+          return;
+        }
+        container.innerHTML = `<div class="section-label">Search Results (${results.length})</div>` +
+          results.map(p => buildSearchResultCard(p)).join("");
+      }
+
+      // Handle table changes in search results
+      document.getElementById("search-results").addEventListener("change", function(e) {
+        if (e.target.getAttribute("data-action") === "search-set-table") {
+          const username = e.target.getAttribute("data-username");
+          setPlayerTable(username, parseInt(e.target.value));
+          renderSearchResults();
+        }
+      });
 
       // --- Modal Logic ---
       let modalIsEdit = false;
@@ -1427,8 +1644,26 @@
       document
         .getElementById("search-input")
         .addEventListener("input", function () {
-          currentQuery = this.value;
-          renderList();
+          currentQuery = this.value.trim();
+          renderSearchResults();
+        });
+
+      document
+        .getElementById("search-input")
+        .addEventListener("focus", function () {
+          searchFocused = true;
+          if (currentQuery) renderSearchResults();
+        });
+
+      document
+        .getElementById("search-input")
+        .addEventListener("blur", function () {
+          // Delay to allow click on search result actions
+          setTimeout(() => {
+            searchFocused = false;
+            renderSearchResults();
+            renderList();
+          }, 200);
         });
 
       // Close tag dropdowns when clicking outside
@@ -1445,11 +1680,26 @@
         .addEventListener("click", function () {
           document.getElementById("search-input").value = "";
           currentQuery = "";
+          renderSearchResults();
           renderList();
         });
 
       document.getElementById("add-btn").addEventListener("click", function () {
         openModal();
+      });
+
+      // --- Cheat Sheet Modal ---
+      document.getElementById("cheat-btn").addEventListener("click", function () {
+        document.getElementById("cheat-overlay").classList.add("show");
+      });
+      document.getElementById("cheat-close").addEventListener("click", function () {
+        document.getElementById("cheat-overlay").classList.remove("show");
+      });
+      document.getElementById("cheat-done").addEventListener("click", function () {
+        document.getElementById("cheat-overlay").classList.remove("show");
+      });
+      document.getElementById("cheat-overlay").addEventListener("click", function (e) {
+        if (e.target === this) this.classList.remove("show");
       });
 
       document
