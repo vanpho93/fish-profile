@@ -766,6 +766,57 @@
           padding: 16px;
         }
       }
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        margin: 16px 0;
+      }
+      .pagination button {
+        background: #21262d;
+        color: #eaeaea;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      .pagination button:hover {
+        border-color: #eaeaea;
+      }
+      .pagination button:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .pagination button:disabled:hover {
+        border-color: #30363d;
+      }
+      .pagination .page-info {
+        color: #8b949e;
+        font-size: 13px;
+      }
+      .clear-fav-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: #21262d;
+        border: 1px solid #30363d;
+        border-radius: 8px;
+        z-index: 100;
+        min-width: 140px;
+        padding: 4px 0;
+        margin-top: 4px;
+      }
+      .clear-fav-menu.show { display: block; }
+      .clear-fav-item {
+        padding: 8px 14px;
+        color: #eaeaea;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .clear-fav-item:hover { background: #30363d; }
       .cheat-modal-body {
         max-height: 70vh;
         overflow-y: auto;
@@ -822,6 +873,18 @@
       <button class="table-tab" data-table="3">Table 3</button>
       <button class="table-tab" data-table="4">Table 4</button>
       <button class="manage-tags-btn" id="clear-table-btn" style="display:none">🗑️ Clear Table</button>
+      <div class="clear-fav-wrap" style="position:relative;display:inline-block">
+        <button class="manage-tags-btn" id="clear-fav-btn">⭐ Clear Fav ▾</button>
+        <div class="clear-fav-menu" id="clear-fav-menu">
+          <div class="clear-fav-item" data-scope="no-table">Non-table</div>
+          <div class="clear-fav-item" data-scope="1">Table 1</div>
+          <div class="clear-fav-item" data-scope="2">Table 2</div>
+          <div class="clear-fav-item" data-scope="3">Table 3</div>
+          <div class="clear-fav-item" data-scope="4">Table 4</div>
+          <div class="clear-fav-item" data-scope="all">All Tables</div>
+          <div class="clear-fav-item" data-scope="every">Every Fav</div>
+        </div>
+      </div>
       <span style="margin-left:auto;display:flex;gap:6px">
         <button class="manage-tags-btn" id="manage-tags-btn">🏷️ Tags</button>
         <button class="manage-tags-btn" id="export-btn">📤 Export</button>
@@ -1194,6 +1257,8 @@
       let currentQuery = "";
       let activeTagFilters = [];
       let activeTableFilter = 0;
+      let currentPage = 0;
+      const PAGE_SIZE = 50;
 
       function renderTagFilterBar() {
         const tags = loadTags();
@@ -1221,6 +1286,7 @@
           } else {
             activeTagFilters.push(id);
           }
+          currentPage = 0;
           renderTagFilterBar();
           renderList();
         });
@@ -1287,12 +1353,26 @@
           return;
         }
 
+        const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+        if (currentPage >= totalPages) currentPage = totalPages - 1;
+        if (currentPage < 0) currentPage = 0;
+        const start = currentPage * PAGE_SIZE;
+        const pageItems = sorted.slice(start, start + PAGE_SIZE);
+
         const label =
           activeTableFilter > 0 ? `Table ${activeTableFilter}` : "All Players";
         html += `<div class="section-label">${label} (${sorted.length})</div>`;
-        sorted.forEach((p) => {
+        pageItems.forEach((p) => {
           html += buildCard(p);
         });
+
+        if (totalPages > 1) {
+          html += `<div class="pagination">
+            <button data-page="prev" ${currentPage === 0 ? "disabled" : ""}>◀ Prev</button>
+            <span class="page-info">${currentPage + 1} / ${totalPages}</span>
+            <button data-page="next" ${currentPage >= totalPages - 1 ? "disabled" : ""}>▶ Next</button>
+          </div>`;
+        }
 
         container.innerHTML = html;
       }
@@ -1368,7 +1448,22 @@
           const username = e.target.getAttribute("data-username");
           setPlayerTable(username, parseInt(e.target.value));
           renderSearchResults();
+          renderList();
+          document.getElementById("search-input").focus();
         }
+      });
+
+      // Hide search results when focus leaves search results area
+      document.getElementById("search-results").addEventListener("focusout", function(e) {
+        setTimeout(() => {
+          const active = document.activeElement;
+          const sr = document.getElementById("search-results");
+          const si = document.getElementById("search-input");
+          if (sr.contains(active) || active === si) return;
+          searchFocused = false;
+          renderSearchResults();
+          renderList();
+        }, 150);
       });
 
       // --- Modal Logic ---
@@ -1424,6 +1519,13 @@
       document
         .getElementById("list-container")
         .addEventListener("click", function (e) {
+          const pageBtn = e.target.closest("[data-page]");
+          if (pageBtn) {
+            const dir = pageBtn.getAttribute("data-page");
+            if (dir === "prev" && currentPage > 0) { currentPage--; renderList(); }
+            else if (dir === "next") { currentPage++; renderList(); }
+            return;
+          }
           const btn = e.target.closest("[data-action]");
           if (!btn) return;
           const action = btn.getAttribute("data-action");
@@ -1658,12 +1760,15 @@
       document
         .getElementById("search-input")
         .addEventListener("blur", function () {
-          // Delay to allow click on search result actions
+          // Delay to allow interaction with search result actions (selects, etc.)
           setTimeout(() => {
+            const active = document.activeElement;
+            const searchResults = document.getElementById("search-results");
+            if (searchResults.contains(active)) return;
             searchFocused = false;
             renderSearchResults();
             renderList();
-          }, 200);
+          }, 150);
         });
 
       // Close tag dropdowns when clicking outside
@@ -1708,8 +1813,39 @@
           const tab = e.target.closest(".table-tab");
           if (!tab) return;
           activeTableFilter = parseInt(tab.getAttribute("data-table"));
+          currentPage = 0;
           renderList();
         });
+
+      document.getElementById("clear-fav-btn").addEventListener("click", function (e) {
+        e.stopPropagation();
+        document.getElementById("clear-fav-menu").classList.toggle("show");
+      });
+      document.getElementById("clear-fav-menu").addEventListener("click", function (e) {
+        const item = e.target.closest(".clear-fav-item");
+        if (!item) return;
+        const scope = item.getAttribute("data-scope");
+        const h = loadHighlights();
+        const players = loadPlayers();
+        if (scope === "every") {
+          saveHighlights({});
+        } else {
+          Object.keys(h).forEach(k => {
+            const table = getPlayerTable(k);
+            if (scope === "all") delete h[k];
+            else if (scope === "no-table" && !table) delete h[k];
+            else if (parseInt(scope) === table) delete h[k];
+          });
+          saveHighlights(h);
+        }
+        document.getElementById("clear-fav-menu").classList.remove("show");
+        renderList();
+      });
+      document.addEventListener("click", function (e) {
+        if (!e.target.closest(".clear-fav-wrap")) {
+          document.getElementById("clear-fav-menu").classList.remove("show");
+        }
+      });
 
       document.getElementById("clear-table-btn").addEventListener("click", function () {
         if (!activeTableFilter) return;
@@ -1756,8 +1892,16 @@
           let players = loadPlayers();
 
           if (!modalIsEdit && findPlayer(players, username)) {
-            errorEl.textContent = "A player with that username already exists.";
-            errorEl.style.display = "block";
+            const existing = findPlayer(players, username);
+            modalIsEdit = true;
+            modalOriginalUsername = existing.username;
+            modalSelectedTags = [...(existing.tags || [])];
+            document.getElementById("modal-title").textContent = "Edit Player";
+            document.getElementById("username-input").value = existing.username;
+            document.getElementById("notes-input").value = existing.notes || "";
+            document.getElementById("table-input").value = getPlayerTable(existing.username);
+            renderModalTags();
+            document.getElementById("notes-input").focus();
             return;
           }
 
