@@ -850,6 +850,80 @@
         border-top: 1px solid #30363d;
         margin: 12px 0;
       }
+      /* --- Floating Action Buttons --- */
+      .fab-btn {
+        position: fixed;
+        right: 20px;
+        background: #21262d;
+        border: 1px solid #30363d;
+        border-radius: 50%;
+        width: 42px;
+        height: 42px;
+        color: #8b949e;
+        cursor: pointer;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 40;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        transition: color 0.15s, border-color 0.15s;
+      }
+      .fab-btn:hover {
+        color: #eaeaea;
+        border-color: #eaeaea;
+      }
+      #go-top-btn {
+        bottom: 20px;
+        display: none;
+      }
+      #sitemap-toggle-btn {
+        bottom: 72px;
+      }
+      /* --- Sitemap Panel --- */
+      .sitemap-panel {
+        position: fixed;
+        bottom: 122px;
+        right: 20px;
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 8px;
+        padding: 6px 0;
+        z-index: 41;
+        min-width: 150px;
+        display: none;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      }
+      .sitemap-panel.show {
+        display: block;
+      }
+      .sitemap-nav-title {
+        font-size: 11px;
+        color: #8b949e;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 4px 12px 6px;
+      }
+      .sitemap-link {
+        display: block;
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: none;
+        color: #8b949e;
+        padding: 7px 12px;
+        font-size: 13px;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .sitemap-link:hover {
+        background: #21262d;
+        color: #eaeaea;
+      }
+      .sitemap-link.sitemap-active {
+        color: #7ee787;
+        font-weight: 600;
+      }
     </style>
   </head>
   <body>
@@ -1106,6 +1180,18 @@
         </div>
       </div>
     </div>
+
+    <!-- Sitemap panel -->
+    <div class="sitemap-panel" id="sitemap-panel">
+      <div class="sitemap-nav-title">Quick Nav</div>
+      <button class="sitemap-link" data-sitemap-table="0">📋 All Players</button>
+      <button class="sitemap-link" data-sitemap-table="1">🎯 Table 1</button>
+      <button class="sitemap-link" data-sitemap-table="2">🎯 Table 2</button>
+      <button class="sitemap-link" data-sitemap-table="3">🎯 Table 3</button>
+      <button class="sitemap-link" data-sitemap-table="4">🎯 Table 4</button>
+    </div>
+    <button class="fab-btn" id="sitemap-toggle-btn" title="Quick Nav">🗺️</button>
+    <button class="fab-btn" id="go-top-btn" title="Go to top">↑</button>
 
     <script>
       const STORAGE_KEY = "poker_player_notes";
@@ -1385,6 +1471,7 @@
         });
         document.getElementById("clear-table-btn").style.display =
           activeTableFilter > 0 ? "" : "none";
+        updateSitemapActive();
       }
 
       function buildSearchResultCard(player) {
@@ -2324,6 +2411,42 @@
           renderList();
         }
       })();
+      // --- Go to Top ---
+      window.addEventListener("scroll", function () {
+        const btn = document.getElementById("go-top-btn");
+        btn.style.display = window.scrollY > 200 ? "flex" : "none";
+      });
+      document.getElementById("go-top-btn").addEventListener("click", function () {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      // --- Sitemap ---
+      function updateSitemapActive() {
+        document.querySelectorAll(".sitemap-link").forEach(function (link) {
+          const t = parseInt(link.getAttribute("data-sitemap-table"));
+          link.classList.toggle("sitemap-active", t === activeTableFilter);
+        });
+      }
+      document.getElementById("sitemap-toggle-btn").addEventListener("click", function (e) {
+        e.stopPropagation();
+        const panel = document.getElementById("sitemap-panel");
+        panel.classList.toggle("show");
+        if (panel.classList.contains("show")) updateSitemapActive();
+      });
+      document.getElementById("sitemap-panel").addEventListener("click", function (e) {
+        const link = e.target.closest(".sitemap-link");
+        if (!link) return;
+        activeTableFilter = parseInt(link.getAttribute("data-sitemap-table"));
+        currentPage = 0;
+        renderList();
+        document.getElementById("sitemap-panel").classList.remove("show");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+      document.addEventListener("click", function (e) {
+        if (!e.target.closest("#sitemap-panel") && !e.target.closest("#sitemap-toggle-btn")) {
+          document.getElementById("sitemap-panel").classList.remove("show");
+        }
+      });
     </script>
   </body>
 </html>
